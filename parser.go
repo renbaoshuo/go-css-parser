@@ -79,7 +79,7 @@ func (p *Parser) ParseRule() (*CssRule, error, bool) {
 		return nil, err, false
 
 	case css.CommentGrammar:
-		return nil, nil, true // Skip comments
+		return nil, nil, false // Skip comments
 
 	case css.AtRuleGrammar:
 		rule, err := p.parseSingleAtRuleBase(gt, tt, data, p.parser.Values())
