@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-go get github.com/renbaoshuo/go-css-parser
+go get go.baoshuo.dev/css-parser
 ```
 
 ## Usage
@@ -11,17 +11,17 @@ go get github.com/renbaoshuo/go-css-parser
 ```go
 package main
 
-import "github.com/renbaoshuo/go-css-parser"
+import "go.baoshuo.dev/css-parser"
 
 func main() {
   // Parse CSS declarations (e.g., from style attribute)
-  decls, err := parser.ParseDeclarations(`
+  decls, err := css_parser.ParseDeclarations(`
     color: red;
     font-size: 16px;
   `)
 
   // Parse CSS stylesheet (e.g., from a <style> tag)
-  stylesheet, err := parser.ParseStylesheet(`
+  stylesheet, err := css_parser.ParseStylesheet(`
     .example {
       color: blue;
       font-size: 14px;
