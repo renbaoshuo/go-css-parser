@@ -78,7 +78,7 @@ func (p *Parser) ParseRule() (*CssRule, error, bool) {
 		}
 		return nil, err, false
 
-	case css.CommentGrammar:
+	case css.CommentGrammar, css.TokenGrammar:
 		return nil, nil, false // Skip comments
 
 	case css.AtRuleGrammar:
@@ -131,7 +131,7 @@ func (p *Parser) ParseDeclarations() ([]*CssDeclaration, error) {
 			}
 			ds = append(ds, d)
 
-		case css.CommentGrammar:
+		case css.CommentGrammar, css.TokenGrammar:
 			// Skip comments
 			continue
 
@@ -155,7 +155,7 @@ ScanLoop:
 			}
 			return err
 
-		case css.CommentGrammar:
+		case css.CommentGrammar, css.TokenGrammar:
 			continue // Skip comments
 
 		case css.EndAtRuleGrammar, css.EndRulesetGrammar:
