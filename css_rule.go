@@ -16,25 +16,6 @@ const (
 	AtRule
 )
 
-// https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_syntax/At-rule
-// Not all at-rules are supported, only the above are supported
-var atRules_statements = []string{
-	"@charset", "@import", "@namespace",
-}
-var atRules_blocks_declarations = []string{
-	"@counter-style",
-	"@font-face",
-	"@position-try",
-	"@property",
-}
-var atRules_blocks_rules = []string{
-	"@container",
-	"@keyframes",
-	"@media",
-	"@scope",
-	"@supports",
-}
-
 func (k CssRuleKind) String() string {
 	switch k {
 	case QualifiedRule:
