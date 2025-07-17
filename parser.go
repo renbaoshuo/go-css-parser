@@ -8,12 +8,16 @@ import (
 )
 
 type Parser struct {
-	Parser *css.Parser
+	inline     bool
+	parser     *css.Parser
+	embedLevel int
 }
 
 func NewParser(content string, inline bool) *Parser {
 	return &Parser{
-		Parser: css.NewParser(parse.NewInputString(content), inline),
+		inline:     inline,
+		parser:     css.NewParser(parse.NewInputString(content), inline),
+		embedLevel: 0,
 	}
 }
 
@@ -42,33 +46,103 @@ func (p *Parser) ParseStylesheet() (*CssStylesheet, error) {
 }
 
 func (p *Parser) ParseRules() ([]*CssRule, error) {
-	return nil, nil // TODO: Implement this method
+	rules := []*CssRule{}
 
+	for {
+		rule, err := p.ParseRule()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if rule == nil {
+			break // EOF reached, exit the loop
+		}
+
+		rules = append(rules, rule)
+	}
+
+	return rules, nil // TODO: Implement this method
+}
+
+func (p *Parser) ParseRule() (*CssRule, error) {
+	firstRun := true
+	selectors := []string{}
+
+	for {
+		gt, _, _ := p.parser.Next()
+
+		switch gt {
+		case css.ErrorGrammar:
+			err := p.parser.Err()
+			if firstRun && err.Error() == "EOF" {
+				return nil, nil
+			}
+			return nil, err
+
+		case css.CommentGrammar:
+			continue
+
+		case css.QualifiedRuleGrammar:
+			selector := valuesToString(p.parser.Values())
+			selectors = append(selectors, selector)
+
+		case css.AtRuleGrammar:
+			// TODO
+			return nil, errors.New("AtRuleGrammar parsing not implemented yet")
+
+		case css.BeginAtRuleGrammar:
+			// TODO
+			return nil, errors.New("BeginAtRuleGrammar parsing not implemented yet")
+
+		case css.BeginRulesetGrammar:
+			selector := valuesToString(p.parser.Values())
+			selectors = append(selectors, selector)
+
+			rule := NewCssRule(QualifiedRule)
+			rule.EmbedLevel = p.embedLevel
+			rule.Selectors = selectors
+
+			p.embedLevel++
+			declarations, err := p.ParseDeclarations()
+			p.embedLevel--
+			if err != nil {
+				return nil, err
+			}
+
+			rule.Declarations = declarations
+
+			return rule, nil
+
+		default:
+			return nil, errors.New("Unexpected grammar type: " + gt.String())
+		}
+
+		firstRun = false
+	}
 }
 
 func (p *Parser) ParseDeclarations() ([]*CssDeclaration, error) {
 	ds := []*CssDeclaration{}
 
 	for {
-		gt, _, data := p.Parser.Next()
+		gt, _, data := p.parser.Next()
 
-		if gt == css.ErrorGrammar {
-			err := p.Parser.Err()
-
-			if err.Error() == "EOF" {
-				return ds, nil // No rules found
+		switch gt {
+		case css.ErrorGrammar:
+			err := p.parser.Err()
+			if p.inline && err.Error() == "EOF" {
+				break // If inline and EOF, break the loop
 			}
-
 			return nil, err // Return error if not EOF
-		}
 
-		if gt == css.DeclarationGrammar || gt == css.CustomPropertyGrammar {
+		case css.DeclarationGrammar, css.CustomPropertyGrammar:
 			d := NewCssDeclaration()
 			d.Property = string(data)
 
 			importantFlag := false
 
-			for _, val := range p.Parser.Values() {
+			for _, val := range p.parser.Values() {
 				val := string(val.Data)
 
 				if importantFlag {
@@ -92,13 +166,23 @@ func (p *Parser) ParseDeclarations() ([]*CssDeclaration, error) {
 
 			ds = append(ds, d)
 
+		case css.CommentGrammar:
+			// Skip comments
 			continue
-		}
 
-		if gt == css.CommentGrammar {
-			continue // Skip comments
-		}
+		case css.EndRulesetGrammar, css.EndAtRuleGrammar:
+			return ds, nil // Return declarations when end of ruleset or at-rule is reached
 
-		return nil, errors.New("Unexpected grammar type: " + gt.String())
+		default:
+			return nil, errors.New("Unexpected grammar type: " + gt.String())
+		}
 	}
+}
+
+func valuesToString(values []css.Token) string {
+	result := ""
+	for _, val := range values {
+		result += string(val.Data)
+	}
+	return result
 }

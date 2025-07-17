@@ -4,6 +4,27 @@ import (
 	"testing"
 )
 
+func TestParseStylesheet(t *testing.T) {
+	content := `html, body { color: red; }`
+
+	stylesheet, err := ParseStylesheet(content)
+	if err != nil {
+		t.Fatalf("Failed to parse stylesheet: %v", err)
+	}
+
+	if len(stylesheet.Rules) != 1 {
+		t.Fatalf("Expected 1 rule, got %d", len(stylesheet.Rules))
+	}
+
+	rule := stylesheet.Rules[0]
+	if len(rule.Selectors) != 2 || rule.Selectors[0] != "html" || rule.Selectors[1] != "body" {
+		t.Errorf("Rule mismatch: %s with %d declarations", rule.Selectors[0], len(rule.Declarations))
+	}
+
+	println("Parsed stylesheet:")
+	println(stylesheet.String())
+}
+
 func TestParseDeclarations(t *testing.T) {
 	content := "color: red; background-color: blue !important;"
 	parser := NewParser(content, true)
@@ -23,5 +44,9 @@ func TestParseDeclarations(t *testing.T) {
 
 	if declarations[1].Property != "background-color" || declarations[1].Value != "blue" || !declarations[1].Important {
 		t.Errorf("Second declaration mismatch: %s: %s !important=%v", declarations[1].Property, declarations[1].Value, declarations[1].Important)
+	}
+
+	for _, decl := range declarations {
+		println("Parsed declaration:", decl.String())
 	}
 }

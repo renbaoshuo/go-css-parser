@@ -15,9 +15,17 @@ import "github.com/renbaoshuo/go-css-parser"
 
 func main() {
   // Parse CSS declarations (e.g., from style attribute)
-  parser.ParseDeclarations(`
+  decls, err := parser.ParseDeclarations(`
     color: red;
     font-size: 16px;
+  `)
+
+  // Parse CSS stylesheet (e.g., from a <style> tag)
+  stylesheet, err := parser.ParseStylesheet(`
+    .example {
+      color: blue;
+      font-size: 14px;
+    }
   `)
 }
 ```
