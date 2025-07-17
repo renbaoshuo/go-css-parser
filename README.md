@@ -27,3 +27,9 @@ func main() {
 - https://github.com/tdewolff/parse
 - https://github.com/csstree/csstree
 - https://github.com/aymerick/douceur
+
+## Author
+
+**go-css-parser** © [Baoshuo](https://baoshuo.ren), Released under the [MIT](./LICENSE) License.
+
+> [Personal Homepage](https://baoshuo.ren) · [Blog](https://blog.baoshuo.ren) · GitHub [@renbaoshuo](https://github.com/renbaoshuo)
