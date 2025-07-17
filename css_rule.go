@@ -2,7 +2,6 @@ package css_parser
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 )
 
@@ -17,9 +16,23 @@ const (
 	AtRule
 )
 
-var atRulesWithRulesBlock = []string{
-	"@document", "@font-feature-values", "@keyframes",
-	"@media", "@supports", "@container", "@layer",
+// https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_syntax/At-rule
+// Not all at-rules are supported, only the above are supported
+var atRules_statements = []string{
+	"@charset", "@import", "@namespace",
+}
+var atRules_blocks_declarations = []string{
+	"@counter-style",
+	"@font-face",
+	"@position-try",
+	"@property",
+}
+var atRules_blocks_rules = []string{
+	"@container",
+	"@keyframes",
+	"@media",
+	"@scope",
+	"@supports",
 }
 
 func (k CssRuleKind) String() string {
@@ -83,16 +96,6 @@ func (r *CssRule) Equal(o *CssRule) bool {
 	return true
 }
 
-func (r *CssRule) EmbedsRules() bool {
-	if r.Kind == AtRule {
-		if slices.Contains(atRulesWithRulesBlock, r.Name) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (r *CssRule) String() string {
 	result := ""
 
@@ -119,14 +122,12 @@ func (r *CssRule) String() string {
 	} else {
 		result += " {\n"
 
-		if r.EmbedsRules() {
-			for _, subRule := range r.Rules {
-				result += fmt.Sprintf("%s%s\n", r.indent(), subRule.String())
-			}
-		} else {
-			for _, decl := range r.Declarations {
-				result += fmt.Sprintf("%s%s\n", r.indent(), decl.String())
-			}
+		for _, decl := range r.Declarations {
+			result += fmt.Sprintf("%s%s\n", r.indent(), decl.String())
+		}
+
+		for _, subRule := range r.Rules {
+			result += fmt.Sprintf("%s%s\n", r.indent(), subRule.String())
 		}
 
 		result += fmt.Sprintf("%s}", r.indentEndBlock())

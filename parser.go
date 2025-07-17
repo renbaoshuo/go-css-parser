@@ -2,6 +2,7 @@ package css_parser
 
 import (
 	"errors"
+	"slices"
 
 	"github.com/tdewolff/parse/v2"
 	"github.com/tdewolff/parse/v2/css"
@@ -62,7 +63,7 @@ func (p *Parser) ParseRules() ([]*CssRule, error) {
 		rules = append(rules, rule)
 	}
 
-	return rules, nil // TODO: Implement this method
+	return rules, nil
 }
 
 func (p *Parser) ParseRule() (*CssRule, error) {
@@ -70,7 +71,7 @@ func (p *Parser) ParseRule() (*CssRule, error) {
 	selectors := []string{}
 
 	for {
-		gt, _, _ := p.parser.Next()
+		gt, _, data := p.parser.Next()
 
 		switch gt {
 		case css.ErrorGrammar:
@@ -88,12 +89,44 @@ func (p *Parser) ParseRule() (*CssRule, error) {
 			selectors = append(selectors, selector)
 
 		case css.AtRuleGrammar:
-			// TODO
-			return nil, errors.New("AtRuleGrammar parsing not implemented yet")
+			rule := NewCssRule(AtRule)
+			rule.EmbedLevel = p.embedLevel
+			rule.Name = string(data)
+			rule.Prelude = valuesToString(p.parser.Values())
+
+			if !slices.Contains(atRules_statements, rule.Name) {
+				return nil, errors.New("Unsupported at-rule: " + rule.Name)
+			}
+
+			return rule, nil
 
 		case css.BeginAtRuleGrammar:
-			// TODO
-			return nil, errors.New("BeginAtRuleGrammar parsing not implemented yet")
+			rule := NewCssRule(AtRule)
+			rule.EmbedLevel = p.embedLevel
+			rule.Name = string(data)
+			rule.Prelude = valuesToString(p.parser.Values())
+
+			if slices.Contains(atRules_blocks_declarations, rule.Name) {
+				p.embedLevel++
+				declarations, err := p.ParseDeclarations()
+				p.embedLevel--
+				if err != nil {
+					return nil, err
+				}
+				rule.Declarations = declarations
+			} else if slices.Contains(atRules_blocks_rules, rule.Name) {
+				p.embedLevel++
+				rules, err := p.ParseRules()
+				p.embedLevel--
+				if err != nil {
+					return nil, err
+				}
+				rule.Rules = rules
+			} else {
+				return nil, errors.New("Unsupported at-rule: " + rule.Name)
+			}
+
+			return rule, nil
 
 		case css.BeginRulesetGrammar:
 			selector := valuesToString(p.parser.Values())
@@ -113,6 +146,9 @@ func (p *Parser) ParseRule() (*CssRule, error) {
 			rule.Declarations = declarations
 
 			return rule, nil
+
+		case css.EndAtRuleGrammar, css.EndRulesetGrammar:
+			return nil, nil
 
 		default:
 			return nil, errors.New("Unexpected grammar type: " + gt.String())

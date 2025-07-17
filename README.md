@@ -30,6 +30,21 @@ func main() {
 }
 ```
 
+## Limitations
+
+This library does not yet support mixing rules and declarations in one at-rule. For example, the following is not supported:
+
+```css
+@page {
+  size: 8.5in 9in;
+  margin-top: 4in;
+
+  @top-right {
+    content: 'Page ' counter(pageNumber);
+  }
+}
+```
+
 ## Credits
 
 - https://github.com/tdewolff/parse

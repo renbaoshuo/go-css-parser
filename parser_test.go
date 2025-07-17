@@ -5,15 +5,24 @@ import (
 )
 
 func TestParseStylesheet(t *testing.T) {
-	content := `html, body { color: red; }`
+	content := `
+html, body {
+	color: red;
+}
+@media screen and (max-width: 600px) {
+	body {
+		background-color: blue !important;
+	}
+}
+`
 
 	stylesheet, err := ParseStylesheet(content)
 	if err != nil {
 		t.Fatalf("Failed to parse stylesheet: %v", err)
 	}
 
-	if len(stylesheet.Rules) != 1 {
-		t.Fatalf("Expected 1 rule, got %d", len(stylesheet.Rules))
+	if len(stylesheet.Rules) != 2 {
+		t.Fatalf("Expected 2 rule, got %d", len(stylesheet.Rules))
 	}
 
 	rule := stylesheet.Rules[0]
