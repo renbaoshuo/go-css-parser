@@ -1,4 +1,4 @@
-package css_parser
+package cssparser
 
 import (
 	"errors"
@@ -21,16 +21,16 @@ func NewParser(content string, inline bool) *Parser {
 	}
 }
 
-func ParseStylesheet(content string) (*CssStylesheet, error) {
+func ParseStylesheet(content string) (*Stylesheet, error) {
 	return NewParser(content, false).ParseStylesheet()
 }
 
-func ParseDeclarations(content string) ([]*CssDeclaration, error) {
+func ParseDeclarations(content string) ([]*Declaration, error) {
 	return NewParser(content, true).ParseDeclarations()
 }
 
-func (p *Parser) ParseStylesheet() (*CssStylesheet, error) {
-	s := NewCssStylesheet()
+func (p *Parser) ParseStylesheet() (*Stylesheet, error) {
+	s := NewStylesheet()
 
 	rules, err := p.ParseRules()
 	if err != nil {
@@ -110,8 +110,8 @@ func (p *Parser) ParseRule() (*CssRule, error, bool) {
 	}
 }
 
-func (p *Parser) ParseDeclarations() ([]*CssDeclaration, error) {
-	ds := []*CssDeclaration{}
+func (p *Parser) ParseDeclarations() ([]*Declaration, error) {
+	ds := []*Declaration{}
 
 	for {
 		gt, tt, data := p.parser.Next()

@@ -1,43 +1,43 @@
-package css_parser
+package cssparser
 
 import (
 	"fmt"
 )
 
-type CssDeclaration struct {
+type Declaration struct {
 	Property  string
 	Value     string
 	Important bool
 }
 
-func NewCssDeclaration() *CssDeclaration {
-	return &CssDeclaration{}
+func NewCssDeclaration() *Declaration {
+	return &Declaration{}
 }
 
-func (d *CssDeclaration) ValueString() string {
+func (d *Declaration) ValueString() string {
 	return d.Value
 }
 
-func (d *CssDeclaration) ValueStringWithImportant(option bool) string {
+func (d *Declaration) ValueStringWithImportant(option bool) string {
 	if option && d.Important {
 		return fmt.Sprintf("%s !important", d.Value)
 	}
 	return d.Value
 }
 
-func (d *CssDeclaration) String() string {
+func (d *Declaration) String() string {
 	return d.StringWithImportant(true)
 }
 
-func (d *CssDeclaration) StringWithImportant(option bool) string {
+func (d *Declaration) StringWithImportant(option bool) string {
 	return fmt.Sprintf("%s: %s;", d.Property, d.ValueStringWithImportant(option))
 }
 
-func (d *CssDeclaration) Equal(other *CssDeclaration) bool {
+func (d *Declaration) Equal(other *Declaration) bool {
 	return (d.Property == other.Property) && (d.Value == other.Value) && (d.Important == other.Important)
 }
 
-type DeclarationsByProperty []*CssDeclaration
+type DeclarationsByProperty []*Declaration
 
 // Implements sort.Interface
 func (ds DeclarationsByProperty) Len() int {
@@ -52,6 +52,7 @@ func (ds DeclarationsByProperty) Less(i, j int) bool {
 	return ds[i].Property < ds[j].Property
 }
 
+// ToObject converts DeclarationsByProperty to a map[string]string
 func (ds DeclarationsByProperty) ToObject() map[string]string {
 	obj := make(map[string]string, len(ds))
 	for _, d := range ds {

@@ -1,4 +1,4 @@
-package css_parser
+package cssparser
 
 import (
 	"github.com/tdewolff/parse/v2/css"

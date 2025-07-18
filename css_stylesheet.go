@@ -1,14 +1,14 @@
-package css_parser
+package cssparser
 
-type CssStylesheet struct {
+type Stylesheet struct {
 	Rules []*CssRule
 }
 
-func NewCssStylesheet() *CssStylesheet {
-	return &CssStylesheet{}
+func NewStylesheet() *Stylesheet {
+	return &Stylesheet{}
 }
 
-func (s *CssStylesheet) String() string {
+func (s *Stylesheet) String() string {
 	result := ""
 
 	for _, rule := range s.Rules {

@@ -1,4 +1,4 @@
-package css_parser
+package cssparser
 
 import (
 	"errors"
@@ -106,7 +106,7 @@ GetAllSelectorsLoop:
 	return rule, nil
 }
 
-func (*Parser) parseDeclarationBase(gt css.GrammarType, tt css.TokenType, data []byte, values []css.Token) (*CssDeclaration, error) {
+func (*Parser) parseDeclarationBase(gt css.GrammarType, tt css.TokenType, data []byte, values []css.Token) (*Declaration, error) {
 	d := NewCssDeclaration()
 	d.Property = string(data)
 

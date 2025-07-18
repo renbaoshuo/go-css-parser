@@ -15,13 +15,13 @@ import "go.baoshuo.dev/css-parser"
 
 func main() {
   // Parse CSS declarations (e.g., from style attribute)
-  decls, err := css_parser.ParseDeclarations(`
+  declarations, err := cssparser.ParseDeclarations(`
     color: red;
     font-size: 16px;
   `)
 
   // Parse CSS stylesheet (e.g., from a <style> tag)
-  stylesheet, err := css_parser.ParseStylesheet(`
+  stylesheet, err := cssparser.ParseStylesheet(`
     .example {
       color: blue;
       font-size: 14px;
@@ -33,8 +33,8 @@ func main() {
 ## Credits
 
 - https://github.com/tdewolff/parse
-- https://github.com/csstree/csstree
 - https://github.com/aymerick/douceur
+- https://github.com/csstree/csstree
 
 ## Author
 

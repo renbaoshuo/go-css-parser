@@ -1,4 +1,4 @@
-package css_parser
+package cssparser
 
 import (
 	"fmt"
@@ -29,12 +29,12 @@ func (k CssRuleKind) String() string {
 
 type CssRule struct {
 	Kind         CssRuleKind
-	Name         string            // At Rule name (eg: "@media")
-	Prelude      string            // Raw prelude: https://github.com/csstree/csstree/discussions/168
-	Selectors    []string          // Qualified Rule selectors parsed from prelude
-	Declarations []*CssDeclaration // Style properties
-	Rules        []*CssRule        // At Rule embedded rules
-	EmbedLevel   int               // Current rule embedding level
+	Name         string         // At Rule name (eg: "@media")
+	Prelude      string         // Raw prelude: https://github.com/csstree/csstree/discussions/168
+	Selectors    []string       // Qualified Rule selectors parsed from prelude
+	Declarations []*Declaration // Style properties
+	Rules        []*CssRule     // At Rule embedded rules
+	EmbedLevel   int            // Current rule embedding level
 }
 
 func NewCssRule(kind CssRuleKind) *CssRule {
