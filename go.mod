@@ -1,4 +1,4 @@
-module go.baoshuo.dev/css-parser
+module go.baoshuo.dev/cssparser
 
 go 1.11
 

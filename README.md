@@ -1,9 +1,9 @@
-# go-css-parser
+# Go CSS Parser
 
 ## Installation
 
 ```bash
-go get go.baoshuo.dev/css-parser
+go get go.baoshuo.dev/cssparser
 ```
 
 ## Usage
@@ -11,7 +11,7 @@ go get go.baoshuo.dev/css-parser
 ```go
 package main
 
-import "go.baoshuo.dev/css-parser"
+import "go.baoshuo.dev/cssparser"
 
 func main() {
   // Parse CSS declarations (e.g., from style attribute)
