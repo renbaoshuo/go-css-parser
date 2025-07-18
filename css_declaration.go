@@ -14,20 +14,23 @@ func NewCssDeclaration() *CssDeclaration {
 	return &CssDeclaration{}
 }
 
+func (d *CssDeclaration) ValueString() string {
+	return d.Value
+}
+
+func (d *CssDeclaration) ValueStringWithImportant(option bool) string {
+	if option && d.Important {
+		return fmt.Sprintf("%s !important", d.Value)
+	}
+	return d.Value
+}
+
 func (d *CssDeclaration) String() string {
 	return d.StringWithImportant(true)
 }
 
 func (d *CssDeclaration) StringWithImportant(option bool) string {
-	result := fmt.Sprintf("%s: %s", d.Property, d.Value)
-
-	if option && d.Important {
-		result += " !important"
-	}
-
-	result += ";"
-
-	return result
+	return fmt.Sprintf("%s: %s;", d.Property, d.ValueStringWithImportant(option))
 }
 
 func (d *CssDeclaration) Equal(other *CssDeclaration) bool {
@@ -47,4 +50,14 @@ func (ds DeclarationsByProperty) Swap(i, j int) {
 
 func (ds DeclarationsByProperty) Less(i, j int) bool {
 	return ds[i].Property < ds[j].Property
+}
+
+func (ds DeclarationsByProperty) ToObject() map[string]string {
+	obj := make(map[string]string, len(ds))
+	for _, d := range ds {
+		if _, exists := obj[d.Property]; !exists {
+			obj[d.Property] = d.ValueString()
+		}
+	}
+	return obj
 }
