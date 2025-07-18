@@ -9,6 +9,10 @@ Here's a brief overview of the main functions:
 - ParseStylesheet(content string) (*Stylesheet, error): Parses a complete CSS stylesheet.
 - ParseDeclarations(content string) ([]*Declaration, error): Parses CSS declarations, typically used for inline styles.
 
+Here are the available options for the parser:
+- WithInline(bool): Whether to parse inline styles.
+- WithLooseParsing(bool): Whether to allow loose parsing, which is more permissive and allows for some errors in the CSS syntax.
+
 The source code of this package is hosted on GitHub: https://github.com/renbaoshuo/go-css-parser
 */
 package cssparser

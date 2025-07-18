@@ -30,13 +30,12 @@ html, body {
 		t.Errorf("Rule mismatch: %s with %d declarations", rule.Selectors[0], len(rule.Declarations))
 	}
 
-	println("Parsed stylesheet:")
 	println(stylesheet.String())
 }
 
 func TestParseDeclarations(t *testing.T) {
 	content := "color: red; background-color: blue !important;"
-	parser := NewParser(content, true)
+	parser := NewParser(content, WithInline(true))
 
 	declarations, err := parser.ParseDeclarations()
 	if err != nil {
@@ -56,6 +55,85 @@ func TestParseDeclarations(t *testing.T) {
 	}
 
 	for _, decl := range declarations {
-		println("Parsed declaration:", decl.String())
+		println(decl.String())
+	}
+}
+
+func TestLooseMode(t *testing.T) {
+	// Test CSS with syntax errors
+	invalidCSS := `
+.invalid {
+	color: red;
+	background-
+	font-size: 16px;
+	font-weight: bold;
+	border:
+	height: 100px;
+	width: 200px;
+}
+	`
+
+	// Test with strict mode (should fail)
+	strictParser := NewParser(invalidCSS)
+	_, err := strictParser.ParseStylesheet()
+	// In strict mode, we expect it to either fail or succeed - let's just check loose mode behavior
+	if err == nil {
+		t.Error("Expected error in strict mode, but got none")
+	}
+
+	// Test with loose mode (should succeed and skip errors)
+	looseParser := NewParser(invalidCSS, WithLooseParsing(true))
+	stylesheet, err := looseParser.ParseStylesheet()
+	if err != nil {
+		t.Errorf("Expected no error in loose mode, but got: %v", err)
+	}
+
+	if stylesheet == nil {
+		t.Error("Expected stylesheet to be parsed in loose mode")
+	}
+
+	// Should have at least some valid rules
+	if len(stylesheet.Rules) < 1 {
+		t.Error("Expected at least one valid rule to be parsed in loose mode")
+	}
+
+	println(stylesheet.String())
+}
+
+func TestLooseModeDeclarations(t *testing.T) {
+	// Test declarations with syntax errors
+	invalidDeclarations := `
+color: red;
+invalid-syntax;
+background: blue;
+: invalid-property;
+font-size: 16px;
+	`
+
+	// Test with strict mode (should fail)
+	strictParser := NewParser(invalidDeclarations, WithInline(true))
+	_, err := strictParser.ParseDeclarations()
+	if err == nil {
+		t.Error("Expected error in strict mode, but got none")
+	}
+
+	// Test with loose mode (should succeed)
+	looseParser := NewParser(invalidDeclarations, WithInline(true), WithLooseParsing(true))
+	declarations, err := looseParser.ParseDeclarations()
+	if err != nil {
+		t.Errorf("Expected no error in loose mode, but got: %v", err)
+	}
+
+	if declarations == nil {
+		t.Error("Expected declarations to be parsed in loose mode")
+	}
+
+	// Should have at least some valid declarations
+	if len(declarations) < 1 {
+		t.Error("Expected at least one valid declaration to be parsed in loose mode")
+	}
+
+	for _, decl := range declarations {
+		println(decl.String())
 	}
 }

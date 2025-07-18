@@ -8,25 +8,33 @@ import (
 )
 
 type Parser struct {
-	inline     bool
 	parser     *css.Parser
 	embedLevel int
+
+	inline bool
+	loose  bool // Whether to allow loose parsing, which is more permissive and allows for some errors in the CSS syntax.
 }
 
-func NewParser(content string, inline bool) *Parser {
-	return &Parser{
-		inline:     inline,
-		parser:     css.NewParser(parse.NewInputString(content), inline),
+func NewParser(content string, options ...ParserOption) *Parser {
+	parser := &Parser{
 		embedLevel: 0,
 	}
+
+	for _, option := range options {
+		option(parser)
+	}
+
+	parser.parser = css.NewParser(parse.NewInputString(content), parser.inline)
+
+	return parser
 }
 
-func ParseStylesheet(content string) (*Stylesheet, error) {
-	return NewParser(content, false).ParseStylesheet()
+func ParseStylesheet(content string, options ...ParserOption) (*Stylesheet, error) {
+	return NewParser(content, options...).ParseStylesheet()
 }
 
-func ParseDeclarations(content string) ([]*Declaration, error) {
-	return NewParser(content, true).ParseDeclarations()
+func ParseDeclarations(content string, options ...ParserOption) ([]*Declaration, error) {
+	return NewParser(content, options...).ParseDeclarations()
 }
 
 func (p *Parser) ParseStylesheet() (*Stylesheet, error) {
@@ -76,6 +84,10 @@ func (p *Parser) ParseRule() (*CssRule, error, bool) {
 		if err.Error() == "EOF" {
 			return nil, nil, true
 		}
+		// In loose mode, skip error tokens and continue parsing
+		if p.loose {
+			return nil, nil, false
+		}
 		return nil, err, false
 
 	case css.CommentGrammar, css.TokenGrammar:
@@ -106,10 +118,15 @@ func (p *Parser) ParseRule() (*CssRule, error, bool) {
 		return nil, nil, false
 
 	default:
+		// In loose mode, skip unexpected grammar types and continue parsing
+		if p.loose {
+			return nil, nil, false
+		}
 		return nil, errors.New("Unexpected grammar type: " + gt.String()), false
 	}
 }
 
+// ParseDeclarations parses a list of CSS declarations from the input, now it uses only in inline mode.
 func (p *Parser) ParseDeclarations() ([]*Declaration, error) {
 	ds := []*Declaration{}
 
@@ -121,6 +138,10 @@ func (p *Parser) ParseDeclarations() ([]*Declaration, error) {
 			err := p.parser.Err()
 			if p.inline && err.Error() == "EOF" {
 				return ds, nil
+			}
+			// In loose mode, skip error tokens and continue parsing
+			if p.loose {
+				continue
 			}
 			return nil, err // Return error if not inline EOF
 
@@ -136,6 +157,10 @@ func (p *Parser) ParseDeclarations() ([]*Declaration, error) {
 			continue
 
 		default:
+			// In loose mode, skip unexpected grammar types and continue parsing
+			if p.loose {
+				continue
+			}
 			return nil, errors.New("Unexpected grammar type: " + gt.String())
 		}
 	}
@@ -153,6 +178,10 @@ ScanLoop:
 			if err.Error() == "EOF" {
 				return nil // EOF is not an error in this context
 			}
+			// In loose mode, skip error tokens and continue parsing
+			if p.loose {
+				continue
+			}
 			return err
 
 		case css.CommentGrammar, css.TokenGrammar:
@@ -164,6 +193,10 @@ ScanLoop:
 		default:
 			err := p.parseSubRuleOrDeclarationBase(rule, gt, tt, data, values)
 			if err != nil {
+				// In loose mode, skip errors and continue parsing
+				if p.loose {
+					continue
+				}
 				return err
 			}
 		}

@@ -6,6 +6,20 @@
 go get go.baoshuo.dev/cssparser
 ```
 
+## API
+
+- `ParseStylesheet(content string, options ...ParserOption) (*Stylesheet, error)`<br />
+  Parses a complete CSS stylesheet.
+- `ParseDeclarations(content string, options ...ParserOption) ([]*Declaration, error)`<br />
+  Parses CSS declarations, typically used for inline styles.
+
+Here are the available options for the parser:
+
+- `WithInline(bool)`<br />
+  Whether to parse inline styles.
+- `WithLooseParsing(bool)`<br />
+  Whether to allow loose parsing, which is more permissive and allows for some errors in the CSS syntax.
+
 ## Usage
 
 ```go
