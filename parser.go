@@ -34,7 +34,9 @@ func ParseStylesheet(content string, options ...ParserOption) (*Stylesheet, erro
 }
 
 func ParseDeclarations(content string, options ...ParserOption) ([]*Declaration, error) {
-	return NewParser(content, options...).ParseDeclarations()
+	fullOptions := []ParserOption{WithInline(true)}
+	fullOptions = append(fullOptions, options...)
+	return NewParser(content, fullOptions...).ParseDeclarations()
 }
 
 func (p *Parser) ParseStylesheet() (*Stylesheet, error) {

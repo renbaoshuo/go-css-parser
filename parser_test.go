@@ -35,9 +35,8 @@ html, body {
 
 func TestParseDeclarations(t *testing.T) {
 	content := "color: red; background-color: blue !important;"
-	parser := NewParser(content, WithInline(true))
 
-	declarations, err := parser.ParseDeclarations()
+	declarations, err := ParseDeclarations(content, WithInline(true))
 	if err != nil {
 		t.Fatalf("Failed to parse declarations: %v", err)
 	}
@@ -74,16 +73,14 @@ func TestLooseMode(t *testing.T) {
 	`
 
 	// Test with strict mode (should fail)
-	strictParser := NewParser(invalidCSS)
-	_, err := strictParser.ParseStylesheet()
+	_, err := ParseStylesheet(invalidCSS)
 	// In strict mode, we expect it to either fail or succeed - let's just check loose mode behavior
 	if err == nil {
 		t.Error("Expected error in strict mode, but got none")
 	}
 
 	// Test with loose mode (should succeed and skip errors)
-	looseParser := NewParser(invalidCSS, WithLooseParsing(true))
-	stylesheet, err := looseParser.ParseStylesheet()
+	stylesheet, err := ParseStylesheet(invalidCSS, WithLooseParsing(true))
 	if err != nil {
 		t.Errorf("Expected no error in loose mode, but got: %v", err)
 	}
@@ -107,19 +104,16 @@ color: red;
 invalid-syntax;
 background: blue;
 : invalid-property;
-font-size: 16px;
-	`
+font-size: 16px`
 
 	// Test with strict mode (should fail)
-	strictParser := NewParser(invalidDeclarations, WithInline(true))
-	_, err := strictParser.ParseDeclarations()
+	_, err := ParseDeclarations(invalidDeclarations)
 	if err == nil {
 		t.Error("Expected error in strict mode, but got none")
 	}
 
 	// Test with loose mode (should succeed)
-	looseParser := NewParser(invalidDeclarations, WithInline(true), WithLooseParsing(true))
-	declarations, err := looseParser.ParseDeclarations()
+	declarations, err := ParseDeclarations(invalidDeclarations, WithLooseParsing(true))
 	if err != nil {
 		t.Errorf("Expected no error in loose mode, but got: %v", err)
 	}
