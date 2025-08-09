@@ -1,5 +1,7 @@
 module go.baoshuo.dev/cssparser
 
-go 1.11
+go 1.16
 
-require github.com/tdewolff/parse/v2 v2.8.1
+toolchain go1.24.3
+
+require go.baoshuo.dev/csslexer v0.0.6

@@ -1,4 +1,4 @@
-github.com/tdewolff/parse/v2 v2.8.1 h1:J5GSHru6o3jF1uLlEKVXkDxxcVx6yzOlIVIotK4w2po=
-github.com/tdewolff/parse/v2 v2.8.1/go.mod h1:Hwlni2tiVNKyzR1o6nUs4FOF07URA+JLBLd6dlIXYqo=
-github.com/tdewolff/test v1.0.11 h1:FdLbwQVHxqG16SlkGveC0JVyrJN62COWTRyUFzfbtBE=
-github.com/tdewolff/test v1.0.11/go.mod h1:XPuWBzvdUzhCuxWO1ojpXsyzsA5bFoS3tO/Q3kFuTG8=
+go.baoshuo.dev/csslexer v0.0.5 h1:jnJBbfaavAzzLIMzQbJ0R7sWfJ5k35vFGELETj+bHeQ=
+go.baoshuo.dev/csslexer v0.0.5/go.mod h1:VyhbuU7HxYxCgFQrAHGbxzMo3rwcEmUqM5TG+KcGPY0=
+go.baoshuo.dev/csslexer v0.0.6 h1:tIqpGjx/QESeB21akS9TznOzxYYa0uRSMBSHHEb19hk=
+go.baoshuo.dev/csslexer v0.0.6/go.mod h1:VyhbuU7HxYxCgFQrAHGbxzMo3rwcEmUqM5TG+KcGPY0=
