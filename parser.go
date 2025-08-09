@@ -2,15 +2,17 @@ package cssparser
 
 import (
 	"go.baoshuo.dev/csslexer"
+
+	"go.baoshuo.dev/cssparser/token_stream"
 )
 
 type Parser struct {
-	lexer *csslexer.Lexer
+	s *token_stream.TokenStream
 }
 
-func NewParser(lexer *csslexer.Lexer) *Parser {
+func NewParser(input *csslexer.Input) *Parser {
 	return &Parser{
-		lexer: lexer,
+		s: token_stream.NewTokenStream(input),
 	}
 }
 
