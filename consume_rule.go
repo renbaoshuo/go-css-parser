@@ -18,9 +18,9 @@ func (p *Parser) consumeRuleList() ([]*Rule, error) {
 
 loop:
 	for {
-		tt, _ := p.s.Peek()
+		token := p.s.Peek()
 
-		switch tt {
+		switch token.Type {
 		case csslexer.EOFToken:
 			break loop
 

@@ -7,7 +7,7 @@ import (
 type TokenStream struct {
 	z *csslexer.Input
 	l *csslexer.Lexer
-	p *token
+	p *csslexer.Token
 }
 
 func NewTokenStream(input *csslexer.Input) *TokenStream {
@@ -18,23 +18,32 @@ func NewTokenStream(input *csslexer.Input) *TokenStream {
 	}
 }
 
-func (s *TokenStream) Peek() (csslexer.TokenType, []rune) {
+func (s *TokenStream) Peek() csslexer.Token {
 	if s.p == nil {
-		tt, raw := s.l.Next()
-		p := tokenPool.Get().(*token)
-		p.Type = tt
-		p.Data = raw
+		token := s.l.Next()
+		p := tokenPool.Get().(*csslexer.Token)
+		p.Type = token.Type
+		p.Data = token.Data
 		s.p = p
 	}
-	return s.p.Type, s.p.Data
+
+	return csslexer.Token{
+		Type: s.p.Type,
+		Data: s.p.Data,
+	}
 }
 
-func (s *TokenStream) Consume() (csslexer.TokenType, []rune) {
+func (s *TokenStream) Consume() csslexer.Token {
 	if s.p != nil {
 		tt, raw := s.p.Type, s.p.Data
 		tokenPool.Put(s.p)
 		s.p = nil
-		return tt, raw
+
+		return csslexer.Token{
+			Type: tt,
+			Data: raw,
+		}
+	} else {
+		return s.l.Next()
 	}
-	return s.l.Next()
 }
