@@ -21,3 +21,16 @@ func isBlockEndToken(tt csslexer.TokenType) bool {
 		return false
 	}
 }
+
+func getMatchingBlockEndToken(tt csslexer.TokenType) csslexer.TokenType {
+	switch tt {
+	case csslexer.LeftBraceToken:
+		return csslexer.RightBraceToken
+	case csslexer.LeftParenthesisToken:
+		return csslexer.RightParenthesisToken
+	case csslexer.LeftBracketToken:
+		return csslexer.RightBracketToken
+	default:
+		return csslexer.DefaultToken // Should not happen
+	}
+}

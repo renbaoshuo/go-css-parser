@@ -35,7 +35,7 @@ func (ts *TokenStream) SkipUntil(types ...csslexer.TokenType) {
 		stopTypes[t] = true
 	}
 
-	nestingLevel := 0
+	nestingStack := make([]csslexer.TokenType, 0)
 	for {
 		t := ts.Peek()
 
@@ -43,21 +43,26 @@ func (ts *TokenStream) SkipUntil(types ...csslexer.TokenType) {
 			return // End of file, stop here.
 		}
 
-		if nestingLevel == 0 && stopTypes[t.Type] {
+		if len(nestingStack) == 0 && stopTypes[t.Type] {
 			return // Stop at the specified token type.
 		}
 
 		ts.Consume()
 
-		// TODO: Handle unmatched block end tokens.
-		// e.g., .foo { color: red); }
-		//
-		// Below is a simplified version, and may not handle all cases correctly.
 		if isBlockStartToken(t.Type) {
-			nestingLevel++ // Entering a block, increase nesting level.
-		}
-		if nestingLevel > 0 && isBlockEndToken(t.Type) {
-			nestingLevel-- // Exiting a block, decrease nesting level.
+			nestingStack = append(nestingStack, getMatchingBlockEndToken(t.Type)) // Push the expected end token onto the stack.
+		} else if isBlockEndToken(t.Type) {
+			if len(nestingStack) == 0 {
+				// Unmatched block end token, we should stop here.
+				return
+			}
+
+			if t.Type == nestingStack[len(nestingStack)-1] {
+				nestingStack = nestingStack[:len(nestingStack)-1] // Pop the stack.
+			} else {
+				// Unmatched end token, ignore it and continue.
+				continue
+			}
 		}
 	}
 }
