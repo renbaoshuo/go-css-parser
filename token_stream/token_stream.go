@@ -5,9 +5,10 @@ import (
 )
 
 type TokenStream struct {
-	z *csslexer.Input
-	l *csslexer.Lexer
-	p *csslexer.Token
+	z *csslexer.Input             // The input to the lexer.
+	l *csslexer.Lexer             // The lexer that reads from the input.
+	p *csslexer.Token             // The current token being processed.
+	b map[csslexer.TokenType]bool // Boundary tokens, used to determine if the current token is a boundary token.
 }
 
 func NewTokenStream(input *csslexer.Input) *TokenStream {
@@ -15,6 +16,7 @@ func NewTokenStream(input *csslexer.Input) *TokenStream {
 		z: input,
 		l: csslexer.NewLexer(input),
 		p: nil,
+		b: make(map[csslexer.TokenType]bool),
 	}
 }
 
@@ -46,4 +48,15 @@ func (s *TokenStream) Consume() csslexer.Token {
 	} else {
 		return s.l.Next()
 	}
+}
+
+func (ts *TokenStream) AtEnd() bool {
+	token := ts.Peek()
+	if token.Type == csslexer.EOFToken {
+		return true
+	}
+	if ts.b[token.Type] {
+		return true
+	}
+	return false
 }
