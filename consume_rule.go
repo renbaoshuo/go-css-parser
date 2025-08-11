@@ -13,7 +13,12 @@ import (
 // It ignores whitespace and comments, and processes each rule accordingly.
 //
 // https://www.w3.org/TR/2021/CRD-css-syntax-3-20211224/#consume-list-of-rules
-func (p *Parser) consumeRuleList() ([]*Rule, error) {
+func (p *Parser) consumeRuleList(
+	allowedRules allowedRuleType,
+	allowCdoCdcTokens bool,
+	nestingType NestingTypeType,
+	parentRuleForNesting *Rule,
+) ([]*Rule, error) {
 	var rules []*Rule
 
 loop:
@@ -42,7 +47,7 @@ loop:
 
 		default:
 			// Handle qualified rules
-			rule, err := p.consumeQualifiedRule()
+			rule, err := p.consumeQualifiedRule(allowedRules, nestingType, parentRuleForNesting)
 			if err != nil {
 				return nil, err
 			}
@@ -57,6 +62,30 @@ func (p *Parser) consumeAtRule() (*Rule, error) {
 	return nil, errors.New("not implemented yet")
 }
 
-func (p *Parser) consumeQualifiedRule() (*Rule, error) {
+func (p *Parser) consumeQualifiedRule(
+	allowedRules allowedRuleType,
+	nestingType NestingTypeType,
+	parentRuleForNesting *Rule,
+) (*Rule, error) {
+	if allowedRules.Has(qualifiedRuleTypeStyle) {
+		return p.consumeStyleRule(nestingType, parentRuleForNesting, false)
+	}
+
+	if allowedRules.Has(qualifiedRuleTypeKeyframes) {
+		return p.consumeKeyframeStyleRule()
+	}
+
+	return nil, errors.New("no qualified rule parsed")
+}
+
+func (p *Parser) consumeStyleRule(
+	nestingType NestingTypeType,
+	parentRuleForNesting *Rule,
+	nested bool,
+) (*Rule, error) {
+	return nil, errors.New("not implemented yet")
+}
+
+func (p *Parser) consumeKeyframeStyleRule() (*Rule, error) {
 	return nil, errors.New("not implemented yet")
 }

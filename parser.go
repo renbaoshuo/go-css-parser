@@ -17,5 +17,10 @@ func NewParser(input *csslexer.Input) *Parser {
 }
 
 func (p *Parser) ParseStylesheet() ([]*Rule, error) {
-	return p.consumeRuleList()
+	return p.consumeRuleList(
+		topLevelAllowedRules,
+		true,
+		NestingTypeNone,
+		nil,
+	)
 }
