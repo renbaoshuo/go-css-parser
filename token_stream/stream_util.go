@@ -17,6 +17,17 @@ func (ts *TokenStream) ConsumeWhitespace() {
 	}
 }
 
+// ConsumeIncludingWhitespace consumes the next token and also consumes
+// any whitespace that follows it, returning the token that was consumed.
+// This is useful when you want to process a token and ensure that any
+// whitespace after it is also consumed, so that the next call to Peek()
+// will return the next non-whitespace token.
+func (ts *TokenStream) ConsumeIncludingWhitespace() csslexer.Token {
+	token := ts.Consume()
+	ts.ConsumeWhitespace()
+	return token
+}
+
 // Skip tokens until one of these is true:
 //
 //   - EOF is reached.
