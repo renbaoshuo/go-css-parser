@@ -1,5 +1,9 @@
 package selector
 
+import (
+	"strings"
+)
+
 // ===== SelectorListFlagType =====
 
 type SelectorListFlagType int
@@ -67,4 +71,14 @@ func (s *Selector) Equal(other *Selector) bool {
 	}
 
 	return true
+}
+
+func (s *Selector) String() string {
+	var result strings.Builder
+
+	for _, sel := range s.Selectors {
+		result.WriteString(sel.String())
+	}
+
+	return result.String()
 }

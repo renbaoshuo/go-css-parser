@@ -91,6 +91,8 @@ func Test_SelectorParser_ConsumeSimpleSelector(t *testing.T) {
 				if sel.AttrMatch != tc.expectedAttrMatch {
 					t.Errorf("expected attr match %q, got %q", tc.expectedAttrMatch, sel.AttrMatch)
 				}
+
+				t.Logf("selector: %s", sel.String())
 			} else if tc.expectedValid {
 				t.Error("expected a selector but got nil")
 			}

@@ -1,5 +1,9 @@
 package selector
 
+import (
+	"strings"
+)
+
 // ===== SelectorMatchType =====
 
 type SelectorMatchType int
@@ -60,6 +64,66 @@ type SimpleSelector struct {
 
 	AttrValue []rune                     // The value of the attribute, if applicable.
 	AttrMatch SelectorAttributeMatchType // The match type for attribute selectors, if applicable.
+}
+
+func (s *SimpleSelector) AttrValueString() string {
+	if s.AttrValue == nil {
+		return ""
+	}
+	// TODO: Better escaping for attribute values.
+	// For now, we just escape double quotes.
+	// This is a simple implementation and may not cover all edge cases.
+	return strings.ReplaceAll(string(s.AttrValue), "\"", "\\\"")
+}
+
+func (s *SimpleSelector) String() string {
+	var result strings.Builder
+
+	switch s.Relation {
+	case SelectorRelationSubSelector:
+		// No combinator, just append the selector.
+	case SelectorRelationDescendant:
+		result.WriteString(" ")
+	case SelectorRelationChild:
+		result.WriteString(" > ")
+	case SelectorRelationDirectAdjacent:
+		result.WriteString(" + ")
+	case SelectorRelationIndirectAdjacent:
+		result.WriteString(" ~ ")
+	}
+
+	switch s.Match {
+	case SelectorMatchTag, SelectorMatchUniversalTag:
+		result.WriteString(string(s.Data))
+	case SelectorMatchId:
+		result.WriteString("#" + string(s.Data))
+	case SelectorMatchClass:
+		result.WriteString("." + string(s.Data))
+	case SelectorMatchPseudoClass:
+		result.WriteString(":" + string(s.Data))
+	case SelectorMatchPseudoElement:
+		result.WriteString("::" + string(s.Data))
+	case SelectorMatchPagePseudoClass:
+		result.WriteString("@page :" + string(s.Data))
+	case SelectorMatchAttributeExact:
+		result.WriteString("[" + string(s.Data) + "=\"" + s.AttrValueString() + "\"]")
+	case SelectorMatchAttributeSet:
+		result.WriteString("[" + string(s.Data) + "]")
+	case SelectorMatchAttributeHyphen:
+		result.WriteString("[" + string(s.Data) + "|=\"" + s.AttrValueString() + "\"]")
+	case SelectorMatchAttributeList:
+		result.WriteString("[" + string(s.Data) + "~=\"" + s.AttrValueString() + "\"]")
+	case SelectorMatchAttributeContain:
+		result.WriteString("[" + string(s.Data) + "*=\"" + s.AttrValueString() + "\"]")
+	case SelectorMatchAttributeBegin:
+		result.WriteString("[" + string(s.Data) + "^=\"" + s.AttrValueString() + "\"]")
+	case SelectorMatchAttributeEnd:
+		result.WriteString("[" + string(s.Data) + "$=\"" + s.AttrValueString() + "\"]")
+	default:
+		result.WriteString("UnknownSelectorMatchType(" + string(s.Data) + ")")
+	}
+
+	return result.String()
 }
 
 func (s *SimpleSelector) Equal(other *SimpleSelector) bool {
