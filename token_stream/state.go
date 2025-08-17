@@ -27,8 +27,9 @@ func (ts *TokenStream) State() TokenStreamState {
 
 	if ts.p != nil {
 		state.peekedToken = &csslexer.Token{
-			Type: ts.p.Type,
-			Data: ts.p.Data,
+			Type:  ts.p.Type,
+			Value: ts.p.Value,
+			Raw:   ts.p.Raw,
 		}
 	}
 
@@ -37,14 +38,16 @@ func (ts *TokenStream) State() TokenStreamState {
 
 func (tss TokenStreamState) Restore() {
 	// Restore the input state.
-	tss.tokenStream.z.RestoreState(tss.inputState)
+	tss.inputState.Restore()
 
 	// Restore the peeked token if it exists.
 	if tss.peekedToken != nil {
-		tss.tokenStream.p = &csslexer.Token{
-			Type: tss.peekedToken.Type,
-			Data: tss.peekedToken.Data,
+		if tss.tokenStream.p != nil {
+			tokenPool.Put(tss.tokenStream.p) // Return the old token to the pool.
 		}
+		p := tokenPool.Get().(*csslexer.Token)
+		p.Type, p.Value, p.Raw = tss.peekedToken.Type, tss.peekedToken.Value, tss.peekedToken.Raw
+		tss.tokenStream.p = p
 	} else {
 		tss.tokenStream.p = nil
 	}

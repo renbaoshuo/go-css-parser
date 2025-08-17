@@ -2,6 +2,8 @@ package selector
 
 import (
 	"strings"
+
+	"go.baoshuo.dev/cssutil"
 )
 
 // ===== SelectorMatchType =====
@@ -57,23 +59,17 @@ const (
 // It can represent various types of selectors such as tag, class, id, attribute, etc.
 type SimpleSelector struct {
 	Match    SelectorMatchType    // The type of selector match.
-	Data     []rune               // The raw selector data.
+	Value    string               // The value of the selector, e.g., tag name, class name, id, etc.
 	Relation SelectorRelationType // The relation to the previous selector in the list.
 
 	// Below are optional fields that may be used for specific selector types.
 
-	AttrValue []rune                     // The value of the attribute, if applicable.
+	AttrValue string                     // The value of the attribute, if applicable.
 	AttrMatch SelectorAttributeMatchType // The match type for attribute selectors, if applicable.
 }
 
 func (s *SimpleSelector) AttrValueString() string {
-	if s.AttrValue == nil {
-		return ""
-	}
-	// TODO: Better escaping for attribute values.
-	// For now, we just escape double quotes.
-	// This is a simple implementation and may not cover all edge cases.
-	return strings.ReplaceAll(string(s.AttrValue), "\"", "\\\"")
+	return cssutil.SerializeString(s.AttrValue)
 }
 
 func (s *SimpleSelector) String() string {
@@ -94,33 +90,33 @@ func (s *SimpleSelector) String() string {
 
 	switch s.Match {
 	case SelectorMatchTag, SelectorMatchUniversalTag:
-		result.WriteString(string(s.Data))
+		result.WriteString(cssutil.SerializeIdentifier(s.Value))
 	case SelectorMatchId:
-		result.WriteString("#" + string(s.Data))
+		result.WriteString("#" + cssutil.SerializeIdentifier(s.Value))
 	case SelectorMatchClass:
-		result.WriteString("." + string(s.Data))
+		result.WriteString("." + cssutil.SerializeIdentifier(s.Value))
 	case SelectorMatchPseudoClass:
-		result.WriteString(":" + string(s.Data))
+		result.WriteString(":" + cssutil.SerializeIdentifier(s.Value))
 	case SelectorMatchPseudoElement:
-		result.WriteString("::" + string(s.Data))
+		result.WriteString("::" + cssutil.SerializeIdentifier(s.Value))
 	case SelectorMatchPagePseudoClass:
-		result.WriteString("@page :" + string(s.Data))
+		result.WriteString("@page :" + cssutil.SerializeIdentifier(s.Value))
 	case SelectorMatchAttributeExact:
-		result.WriteString("[" + string(s.Data) + "=\"" + s.AttrValueString() + "\"]")
+		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "=" + s.AttrValueString() + "]")
 	case SelectorMatchAttributeSet:
-		result.WriteString("[" + string(s.Data) + "]")
+		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "]")
 	case SelectorMatchAttributeHyphen:
-		result.WriteString("[" + string(s.Data) + "|=\"" + s.AttrValueString() + "\"]")
+		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "|=" + s.AttrValueString() + "]")
 	case SelectorMatchAttributeList:
-		result.WriteString("[" + string(s.Data) + "~=\"" + s.AttrValueString() + "\"]")
+		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "~=" + s.AttrValueString() + "]")
 	case SelectorMatchAttributeContain:
-		result.WriteString("[" + string(s.Data) + "*=\"" + s.AttrValueString() + "\"]")
+		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "*=" + s.AttrValueString() + "]")
 	case SelectorMatchAttributeBegin:
-		result.WriteString("[" + string(s.Data) + "^=\"" + s.AttrValueString() + "\"]")
+		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "^=" + s.AttrValueString() + "]")
 	case SelectorMatchAttributeEnd:
-		result.WriteString("[" + string(s.Data) + "$=\"" + s.AttrValueString() + "\"]")
+		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "$=" + s.AttrValueString() + "]")
 	default:
-		result.WriteString("UnknownSelectorMatchType(" + string(s.Data) + ")")
+		result.WriteString("UnknownSelectorMatchType(" + cssutil.SerializeIdentifier(s.Value) + ")")
 	}
 
 	return result.String()
@@ -128,8 +124,8 @@ func (s *SimpleSelector) String() string {
 
 func (s *SimpleSelector) Equal(other *SimpleSelector) bool {
 	return s.Match == other.Match &&
-		string(s.Data) == string(other.Data) &&
+		s.Value == other.Value &&
 		s.Relation == other.Relation &&
-		string(s.AttrValue) == string(other.AttrValue) &&
+		s.AttrValue == other.AttrValue &&
 		s.AttrMatch == other.AttrMatch
 }

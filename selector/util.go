@@ -12,25 +12,24 @@ func equalIgnoreCase(a, b []rune) bool {
 	return true
 }
 
-func prependTypeSelectorIfNeeded(selectors []*SimpleSelector, name, namespace []rune, hasQName bool) []*SimpleSelector {
+func prependTypeSelectorIfNeeded(selectors []*SimpleSelector, name, namespace string, hasQName bool) []*SimpleSelector {
 	if !hasQName {
 		// If we don't have a qualified name, we don't need to prepend a type selector.
 		return selectors
 	}
 
 	// TODO: Handle namespace uri
-	nameData := name
-	if namespace != nil {
-		nameData = append(namespace, '|')
-		nameData = append(nameData, name...)
+	nameStr := name
+	if namespace != "" {
+		nameStr = namespace + "|" + name
 	}
 
 	// TODO: Check if has :host
 
-	if !equalIgnoreCase(nameData, []rune("*")) {
+	if nameStr != "*" {
 		sel := &SimpleSelector{
 			Match:    SelectorMatchTag,
-			Data:     nameData,
+			Value:    nameStr,
 			Relation: SelectorRelationSubSelector,
 		}
 		selectors = append([]*SimpleSelector{sel}, selectors...) // Prepend the type selector

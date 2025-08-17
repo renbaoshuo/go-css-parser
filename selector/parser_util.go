@@ -23,12 +23,8 @@ func (sp *SelectorParser) peekIsCombinator() bool {
 		return false
 	}
 
-	if len(t.Data) != 1 {
-		return false
-	}
-
-	switch t.Data[0] {
-	case '>', '+', '~':
+	switch t.Value {
+	case ">", "+", "~":
 		return true
 	default:
 		return false

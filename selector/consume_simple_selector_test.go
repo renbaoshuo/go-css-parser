@@ -13,54 +13,54 @@ func Test_SelectorParser_ConsumeSimpleSelector(t *testing.T) {
 		name              string
 		input             string
 		expectedMatch     SelectorMatchType
-		expectedData      []rune
+		expectedData      string
 		expectedValid     bool
-		expectedAttrValue []rune
+		expectedAttrValue string
 		expectedAttrMatch SelectorAttributeMatchType
 	}{
 		{
 			"valid hash selector",
 			"#id",
 			SelectorMatchId,
-			[]rune("id"),
+			"id",
 			true,
-			nil,
+			"",
 			SelectorAttributeMatchUnknown,
 		},
 		{
 			"valid class selector",
 			".class",
 			SelectorMatchClass,
-			[]rune("class"),
+			"class",
 			true,
-			nil,
+			"",
 			SelectorAttributeMatchUnknown,
 		},
 		{
 			"valid attribute selector",
 			"[attr=value]",
 			SelectorMatchAttributeExact,
-			[]rune("attr"),
+			"attr",
 			true,
-			[]rune("value"),
+			"value",
 			SelectorAttributeMatchCaseSensitive,
 		},
 		{
 			"valid attribute selector with namespace",
 			"[ns|attr=value]",
 			SelectorMatchAttributeExact,
-			[]rune("ns|attr"),
+			"ns|attr",
 			true,
-			[]rune("value"),
+			"value",
 			SelectorAttributeMatchCaseSensitive,
 		},
 		{
 			"valid attribute selector with case insensitive match",
 			"[attr|='value' i]",
 			SelectorMatchAttributeHyphen,
-			[]rune("attr"),
+			"attr",
 			true,
-			[]rune("value"),
+			"value",
 			SelectorAttributeMatchCaseInsensitive,
 		},
 	}
@@ -82,10 +82,10 @@ func Test_SelectorParser_ConsumeSimpleSelector(t *testing.T) {
 				if sel.Match != tc.expectedMatch {
 					t.Errorf("expected type %q, got %q", tc.expectedMatch, sel.Match)
 				}
-				if string(sel.Data) != string(tc.expectedData) {
-					t.Errorf("expected data %q, got %q", tc.expectedData, sel.Data)
+				if sel.Value != tc.expectedData {
+					t.Errorf("expected data %q, got %q", tc.expectedData, sel.Value)
 				}
-				if string(sel.AttrValue) != string(tc.expectedAttrValue) {
+				if sel.AttrValue != tc.expectedAttrValue {
 					t.Errorf("expected attr value %q, got %q", tc.expectedAttrValue, sel.AttrValue)
 				}
 				if sel.AttrMatch != tc.expectedAttrMatch {

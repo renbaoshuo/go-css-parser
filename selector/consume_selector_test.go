@@ -24,7 +24,7 @@ func Test_SelectorParser_ConsumeName(t *testing.T) {
 			[]rune("div"),
 			nil,
 			true,
-			csslexer.Token{Type: csslexer.EOFToken, Data: nil},
+			csslexer.Token{Type: csslexer.EOFToken, Value: "", Raw: nil},
 		},
 		{
 			"valid name with namespace",
@@ -32,7 +32,7 @@ func Test_SelectorParser_ConsumeName(t *testing.T) {
 			[]rune("div"),
 			[]rune("ns"),
 			true,
-			csslexer.Token{Type: csslexer.EOFToken, Data: nil},
+			csslexer.Token{Type: csslexer.EOFToken, Value: "", Raw: nil},
 		},
 		{
 			"universal selector",
@@ -40,7 +40,7 @@ func Test_SelectorParser_ConsumeName(t *testing.T) {
 			nil,
 			nil,
 			true,
-			csslexer.Token{Type: csslexer.EOFToken, Data: nil},
+			csslexer.Token{Type: csslexer.EOFToken, Value: "", Raw: nil},
 		},
 		{
 			"name with id",
@@ -48,7 +48,7 @@ func Test_SelectorParser_ConsumeName(t *testing.T) {
 			[]rune("div"),
 			nil,
 			true,
-			csslexer.Token{Type: csslexer.HashToken, Data: []rune("#id")},
+			csslexer.Token{Type: csslexer.HashToken, Value: "id", Raw: []rune("#id")},
 		},
 		{
 			"invalid name with delimiter",
@@ -56,7 +56,7 @@ func Test_SelectorParser_ConsumeName(t *testing.T) {
 			nil,
 			nil,
 			false,
-			csslexer.Token{Type: csslexer.DelimiterToken, Data: []rune("|")},
+			csslexer.Token{Type: csslexer.DelimiterToken, Value: "|", Raw: []rune("|")},
 		},
 	}
 
@@ -79,7 +79,9 @@ func Test_SelectorParser_ConsumeName(t *testing.T) {
 			}
 
 			nextToken := ts.Peek()
-			if nextToken.Type != tc.expectedNextToken.Type || string(nextToken.Data) != string(tc.expectedNextToken.Data) {
+			if nextToken.Type != tc.expectedNextToken.Type ||
+				nextToken.Value != tc.expectedNextToken.Value ||
+				string(nextToken.Raw) != string(tc.expectedNextToken.Raw) {
 				t.Errorf("expected next token %v, got %v", tc.expectedNextToken, nextToken)
 			}
 		})
@@ -99,12 +101,12 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 			[]*SimpleSelector{
 				{
 					Match:    SelectorMatchTag,
-					Data:     []rune("div"),
+					Value:    "div",
 					Relation: SelectorRelationSubSelector,
 				},
 				{
 					Match:    SelectorMatchClass,
-					Data:     []rune("class"),
+					Value:    "class",
 					Relation: SelectorRelationSubSelector,
 				},
 			},
@@ -116,20 +118,32 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 			[]*SimpleSelector{
 				{
 					Match:    SelectorMatchTag,
-					Data:     []rune("div"),
+					Value:    "div",
 					Relation: SelectorRelationSubSelector,
 				},
 				{
 					Match:    SelectorMatchId,
-					Data:     []rune("id"),
+					Value:    "id",
 					Relation: SelectorRelationSubSelector,
 				},
 				{
 					Match:     SelectorMatchAttributeExact,
-					Data:      []rune("attr"),
+					Value:     "attr",
 					Relation:  SelectorRelationSubSelector,
-					AttrValue: []rune("value"),
+					AttrValue: "value",
 					AttrMatch: SelectorAttributeMatchCaseSensitive,
+				},
+			},
+			true,
+		},
+		{
+			"valid compound selector with only class",
+			".class",
+			[]*SimpleSelector{
+				{
+					Match:    SelectorMatchClass,
+					Value:    "class",
+					Relation: SelectorRelationSubSelector,
 				},
 			},
 			true,
@@ -174,12 +188,12 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 				Selectors: []*SimpleSelector{
 					{
 						Match:    SelectorMatchTag,
-						Data:     []rune("div"),
+						Value:    "div",
 						Relation: SelectorRelationSubSelector,
 					},
 					{
 						Match:    SelectorMatchClass,
-						Data:     []rune("class"),
+						Value:    "class",
 						Relation: SelectorRelationSubSelector,
 					},
 				},
@@ -194,19 +208,19 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 				Selectors: []*SimpleSelector{
 					{
 						Match:    SelectorMatchTag,
-						Data:     []rune("div"),
+						Value:    "div",
 						Relation: SelectorRelationSubSelector,
 					},
 					{
 						Match:    SelectorMatchId,
-						Data:     []rune("id"),
+						Value:    "id",
 						Relation: SelectorRelationSubSelector,
 					},
 					{
 						Match:     SelectorMatchAttributeExact,
-						Data:      []rune("attr"),
+						Value:     "attr",
 						Relation:  SelectorRelationSubSelector,
-						AttrValue: []rune("value"),
+						AttrValue: "value",
 						AttrMatch: SelectorAttributeMatchCaseSensitive,
 					},
 				},
@@ -221,24 +235,24 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 				Selectors: []*SimpleSelector{
 					{
 						Match:    SelectorMatchTag,
-						Data:     []rune("div"),
+						Value:    "div",
 						Relation: SelectorRelationSubSelector,
 					},
 					{
 						Match:    SelectorMatchClass,
-						Data:     []rune("class"),
+						Value:    "class",
 						Relation: SelectorRelationChild,
 					},
 					{
 						Match:    SelectorMatchId,
-						Data:     []rune("id"),
+						Value:    "id",
 						Relation: SelectorRelationDirectAdjacent,
 					},
 					{
 						Match:     SelectorMatchAttributeExact,
-						Data:      []rune("attr"),
+						Value:     "attr",
 						Relation:  SelectorRelationIndirectAdjacent,
-						AttrValue: []rune("value"),
+						AttrValue: "value",
 						AttrMatch: SelectorAttributeMatchCaseSensitive,
 					},
 				},

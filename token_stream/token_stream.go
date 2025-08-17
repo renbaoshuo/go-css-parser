@@ -24,26 +24,27 @@ func (s *TokenStream) Peek() csslexer.Token {
 	if s.p == nil {
 		token := s.l.Next()
 		p := tokenPool.Get().(*csslexer.Token)
-		p.Type = token.Type
-		p.Data = token.Data
+		p.Type, p.Value, p.Raw = token.Type, token.Value, token.Raw
 		s.p = p
 	}
 
 	return csslexer.Token{
-		Type: s.p.Type,
-		Data: s.p.Data,
+		Type:  s.p.Type,
+		Value: s.p.Value,
+		Raw:   s.p.Raw,
 	}
 }
 
 func (s *TokenStream) Consume() csslexer.Token {
 	if s.p != nil {
-		tt, raw := s.p.Type, s.p.Data
+		tt, value, raw := s.p.Type, s.p.Value, s.p.Raw
 		tokenPool.Put(s.p)
 		s.p = nil
 
 		return csslexer.Token{
-			Type: tt,
-			Data: raw,
+			Type:  tt,
+			Value: value,
+			Raw:   raw,
 		}
 	} else {
 		return s.l.Next()

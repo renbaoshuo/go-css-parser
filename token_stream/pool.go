@@ -10,8 +10,9 @@ import (
 var tokenPool = sync.Pool{
 	New: func() interface{} {
 		return &csslexer.Token{
-			Type: csslexer.DefaultToken,
-			Data: nil,
+			Type:  csslexer.DefaultToken,
+			Value: "",
+			Raw:   make([]rune, 0),
 		}
 	},
 }

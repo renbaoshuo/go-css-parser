@@ -105,73 +105,69 @@ func (sp *SelectorParser) consumeCompoundSelector(nestingType cssparser.NestingT
 //   - The name as a string.
 //   - The namespace as a string (empty if not applicable).
 //   - Whether the name was successfully consumed.
-func (sp *SelectorParser) consumeName() ([]rune, []rune, bool) {
-	var name, namespace []rune
+func (sp *SelectorParser) consumeName() (string, string, bool) {
+	var name, namespace string
 
 	first := sp.tokenStream.Peek()
 	switch first.Type {
 	case csslexer.IdentToken:
-		name = first.Data
+		name = first.Value
 		sp.tokenStream.Consume()
 
 	case csslexer.DelimiterToken:
-		if len(first.Data) != 1 {
-			return nil, nil, false // Invalid name
-		}
-
-		switch first.Data[0] {
-		case '*':
-			name = nil // This is a universal selector, no name.
+		switch first.Value {
+		case "*":
+			name = "" // Universal selector, no name
 			sp.tokenStream.Consume()
 
-		case '|':
+		case "|":
 			// This is an empty namespace, no name.
-			name = nil
+			name = ""
 
 		default:
-			return nil, nil, false // Invalid name
+			return "", "", false // Invalid name
 		}
 
 	default:
-		return nil, nil, false // Invalid name
+		return "", "", false // Invalid name
 	}
 
 	second := sp.tokenStream.Peek()
-	if second.Type != csslexer.DelimiterToken || len(second.Data) != 1 || second.Data[0] != '|' {
+	if second.Type != csslexer.DelimiterToken || second.Value != "|" {
 		// No namespace, just a name.
-		return name, nil, true
+		return name, "", true
 	}
 
 	tss := sp.tokenStream.State()
 	sp.tokenStream.Consume() // Consume the '|'
 
-	if name == nil {
-		namespace = []rune{'*'} // Universal selector with namespace
+	if name == "" {
+		namespace = "*" // Universal selector with namespace
 	} else {
 		namespace = name // Use the name as the namespace
-		name = nil       // Reset name to indicate that we are now looking for a namespace
+		name = ""        // Reset name to indicate that we are now looking for a namespace
 	}
 
 	third := sp.tokenStream.Peek()
 	switch third.Type {
 	case csslexer.IdentToken:
-		name = third.Data
+		name = third.Value
 		sp.tokenStream.Consume()
 
 	case csslexer.DelimiterToken:
-		if len(third.Data) == 1 && third.Data[0] == '*' {
-			name = nil // Universal selector, no name
+		if third.Value == "*" {
+			name = "" // Universal selector, no name
 			sp.tokenStream.Consume()
 		} else {
 			// Invalid name after namespace delimiter
 			tss.Restore()
-			return nil, nil, false
+			return "", "", false
 		}
 
 	default:
 		// Invalid token after namespace delimiter
 		tss.Restore()
-		return nil, nil, false
+		return "", "", false
 	}
 
 	return name, namespace, true
@@ -192,17 +188,14 @@ func (sp *SelectorParser) consumeCombinator() SelectorRelationType {
 	if nextToken.Type != csslexer.DelimiterToken {
 		return fallbackResult // No combinator found, return fallback
 	}
-	if len(nextToken.Data) != 1 {
-		return fallbackResult // Invalid combinator, return fallback
-	}
-	switch nextToken.Data[0] {
-	case '>':
+	switch nextToken.Value {
+	case ">":
 		sp.tokenStream.ConsumeIncludingWhitespace()
 		return SelectorRelationChild
-	case '+':
+	case "+":
 		sp.tokenStream.ConsumeIncludingWhitespace()
 		return SelectorRelationDirectAdjacent
-	case '~':
+	case "~":
 		sp.tokenStream.ConsumeIncludingWhitespace()
 		return SelectorRelationIndirectAdjacent
 	default:

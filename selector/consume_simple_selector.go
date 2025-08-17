@@ -2,6 +2,7 @@ package selector
 
 import (
 	"errors"
+	"strings"
 
 	"go.baoshuo.dev/csslexer"
 
@@ -16,13 +17,10 @@ func (sp *SelectorParser) consumeSimpleSelector() (*SimpleSelector, error) {
 		return sp.consumeId()
 
 	case csslexer.DelimiterToken:
-		if len(token.Data) != 1 {
-			return nil, errors.New("invalid selector: expected single character delimiter")
-		}
-		switch token.Data[0] {
-		case '.':
+		switch token.Value {
+		case ".":
 			return sp.consumeClass()
-		case '&':
+		case "&":
 			return sp.consumeNestingParent()
 		default:
 			return nil, errors.New("invalid selector: unknown delimiter")
@@ -49,7 +47,7 @@ func (sp *SelectorParser) consumeId() (*SimpleSelector, error) {
 	token := sp.tokenStream.Consume() // Consume the hash token
 	return &SimpleSelector{
 		Match: SelectorMatchId,
-		Data:  token.Data[1:],
+		Value: token.Value,
 	}, nil
 }
 
@@ -70,7 +68,7 @@ func (sp *SelectorParser) consumeClass() (*SimpleSelector, error) {
 	sp.tokenStream.Consume() // Consume the class name token
 	return &SimpleSelector{
 		Match: SelectorMatchClass,
-		Data:  token.Data,
+		Value: token.Value,
 	}, nil
 }
 
@@ -96,21 +94,21 @@ func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
 			return errors.New("invalid attribute selector: missing name")
 		}
 
-		if name == nil {
+		if name == "" {
 			return errors.New("invalid attribute selector: name cannot be empty")
 		}
 
 		// TODO: Handle namespace uri
-		nameData := name
-		if namespace != nil {
-			nameData = append(namespace, '|')
-			nameData = append(nameData, name...)
+		// FIXME: when serializing, the "|" will be wrongly serialized as "\|"
+		nameStr := name
+		if namespace != "" {
+			nameStr = namespace + "|" + name
 		}
 
 		if sp.tokenStream.AtEnd() {
 			sel = &SimpleSelector{
 				Match: SelectorMatchAttributeSet,
-				Data:  nameData,
+				Value: nameStr,
 			}
 
 			return nil
@@ -125,11 +123,6 @@ func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
 		if valueToken.Type != csslexer.IdentToken && valueToken.Type != csslexer.StringToken {
 			return errors.New("invalid attribute selector: expected value after match type")
 		}
-		value := valueToken.Data
-		if valueToken.Type == csslexer.StringToken {
-			// Remove quotes from string token value
-			value = value[1 : len(value)-1]
-		}
 		sp.tokenStream.ConsumeIncludingWhitespace() // Consume the value token
 
 		attrMatchType := sp.consumeAttributeFlags()
@@ -140,8 +133,8 @@ func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
 
 		sel = &SimpleSelector{
 			Match:     matchType,
-			Data:      nameData,
-			AttrValue: value,
+			Value:     nameStr,
+			AttrValue: valueToken.Value,
 			AttrMatch: attrMatchType,
 		}
 		return nil
@@ -177,7 +170,7 @@ func (sp *SelectorParser) consumeAttributeMatch() SelectorMatchType {
 		return SelectorMatchAttributeContain
 
 	case csslexer.DelimiterToken:
-		if len(token.Data) == 1 && token.Data[0] == '=' {
+		if token.Value == "=" {
 			sp.tokenStream.ConsumeIncludingWhitespace()
 			return SelectorMatchAttributeExact
 		}
@@ -197,9 +190,9 @@ func (sp *SelectorParser) consumeAttributeFlags() SelectorAttributeMatchType {
 
 	token := sp.tokenStream.ConsumeIncludingWhitespace() // Consume the identifier token
 
-	if equalIgnoreCase(token.Data, []rune("i")) {
+	if strings.ToLower(token.Value) == "i" {
 		return SelectorAttributeMatchCaseInsensitive
-	} else if equalIgnoreCase(token.Data, []rune("s")) {
+	} else if strings.ToLower(token.Value) == "s" {
 		return SelectorAttributeMatchCaseSensitiveAlways
 	} else {
 		return SelectorAttributeMatchCaseSensitive // Default to case-sensitive if unknown flag

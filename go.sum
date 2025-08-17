@@ -1,6 +1,4 @@
-go.baoshuo.dev/csslexer v0.0.6 h1:tIqpGjx/QESeB21akS9TznOzxYYa0uRSMBSHHEb19hk=
-go.baoshuo.dev/csslexer v0.0.6/go.mod h1:VyhbuU7HxYxCgFQrAHGbxzMo3rwcEmUqM5TG+KcGPY0=
-go.baoshuo.dev/csslexer v0.0.7 h1:jbZe41s6OmrgQqSUOkG6g630WwIJnFPmBAD9CQF5/Mg=
-go.baoshuo.dev/csslexer v0.0.7/go.mod h1:VyhbuU7HxYxCgFQrAHGbxzMo3rwcEmUqM5TG+KcGPY0=
-go.baoshuo.dev/csslexer v0.0.8 h1:eydaSm6zDtStnrjcoScLsf/hnwb3fSWeLOg3qlRItUU=
-go.baoshuo.dev/csslexer v0.0.8/go.mod h1:VyhbuU7HxYxCgFQrAHGbxzMo3rwcEmUqM5TG+KcGPY0=
+go.baoshuo.dev/csslexer v0.1.0 h1:1iLGyk2a5wnMIeXV12U1vo20aiqRia9pOp4YgMkfDdQ=
+go.baoshuo.dev/csslexer v0.1.0/go.mod h1:2w+liVUKNXShrZtK/EUT7k0cH/r1RvBwArO2e0QpkQs=
+go.baoshuo.dev/cssutil v0.0.2 h1:rXRuAXfcZwMJcWBbHqd4dfimOYRbz7qd7WfBpLcaj/0=
+go.baoshuo.dev/cssutil v0.0.2/go.mod h1:exK71kXjFJ6p3WOxUG5rAMzoeybABthppOdDhnv8ZwQ=
