@@ -47,8 +47,8 @@ const (
 type SelectorAttributeMatchType int
 
 const (
-	SelectorAttributeMatchUnknown       SelectorAttributeMatchType = iota
-	SelectorAttributeMatchCaseSensitive SelectorAttributeMatchType = iota
+	SelectorAttributeMatchUnknown SelectorAttributeMatchType = iota
+	SelectorAttributeMatchCaseSensitive
 	SelectorAttributeMatchCaseInsensitive
 	SelectorAttributeMatchCaseSensitiveAlways
 )
@@ -89,8 +89,14 @@ func (s *SimpleSelector) String() string {
 	}
 
 	switch s.Match {
-	case SelectorMatchTag, SelectorMatchUniversalTag:
+	case SelectorMatchTag:
 		result.WriteString(cssutil.SerializeIdentifier(s.Value))
+	case SelectorMatchUniversalTag:
+		if s.Value != "" {
+			result.WriteString(cssutil.SerializeIdentifier(s.Value) + "|*")
+		} else {
+			result.WriteString("*")
+		}
 	case SelectorMatchId:
 		result.WriteString("#" + cssutil.SerializeIdentifier(s.Value))
 	case SelectorMatchClass:

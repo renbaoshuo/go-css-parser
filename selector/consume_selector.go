@@ -8,9 +8,10 @@ import (
 	"go.baoshuo.dev/cssparser"
 )
 
-func (sp *SelectorParser) consumeComplexSelector(nestingType cssparser.NestingTypeType) (*Selector, error) {
-	sel := &Selector{}
-
+func (sp *SelectorParser) consumeComplexSelector(
+	nestingType cssparser.NestingTypeType,
+	firstInComplexSelector bool,
+) (*Selector, error) {
 	if nestingType != cssparser.NestingTypeNone && sp.peekIsCombinator() {
 		// Nested selectors that start with a combinator are to be
 		// interpreted as relative selectors (with the anchor being
@@ -18,21 +19,23 @@ func (sp *SelectorParser) consumeComplexSelector(nestingType cssparser.NestingTy
 		return sp.consumeNestedRelativeSelector(nestingType)
 	}
 
-	compoundSelectors := sp.consumeCompoundSelector(nestingType)
+	sel := &Selector{}
+
+	compoundSelectors, firstFlags := sp.consumeCompoundSelector(nestingType)
 	if len(compoundSelectors) == 0 {
 		return nil, errors.New("invalid selector: no compound selectors found")
 	}
+	sel.Flag.Set(firstFlags)
 	sel.Append(compoundSelectors...)
 
-	combinator := sp.consumeCombinator()
-	if combinator != SelectorRelationSubSelector {
-		sel.Flag.Set(SelectorFlagContainsComplexSelector)
-
-		rest, err := sp.consumePartialComplexSelector(nestingType, combinator)
+	if combinator := sp.consumeCombinator(); combinator != SelectorRelationSubSelector {
+		rest, restFlags, err := sp.consumePartialComplexSelector(nestingType, combinator)
 		if err != nil {
 			return nil, err
 		}
 
+		sel.Flag.Set(SelectorFlagContainsComplexSelector)
+		sel.Flag.Set(restFlags)
 		sel.Append(rest...)
 	}
 
@@ -46,19 +49,23 @@ func (sp *SelectorParser) consumeComplexSelector(nestingType cssparser.NestingTy
 func (sp *SelectorParser) consumePartialComplexSelector(
 	nestingType cssparser.NestingTypeType,
 	combinator SelectorRelationType,
-) ([]*SimpleSelector, error) {
+) ([]*SimpleSelector, SelectorListFlagType, error) {
+	var flags SelectorListFlagType
 	selectors := make([]*SimpleSelector, 0)
+
 	for {
-		compound := sp.consumeCompoundSelector(nestingType)
+		compound, compoundFlags := sp.consumeCompoundSelector(nestingType)
 		if len(compound) == 0 {
 			if combinator == SelectorRelationDescendant {
+				flags.Set(compoundFlags)
 				break
 			} else {
-				return nil, errors.New("invalid selector: expected compound selector")
+				return nil, 0, errors.New("invalid selector: expected compound selector")
 			}
 		}
 
 		compound[0].Relation = combinator // Set the relation for the first selector
+		flags.Set(compoundFlags)
 		selectors = append(selectors, compound...)
 
 		combinator = sp.consumeCombinator()
@@ -66,11 +73,13 @@ func (sp *SelectorParser) consumePartialComplexSelector(
 			break
 		}
 	}
-	return selectors, nil
+
+	return selectors, flags, nil
 }
 
-func (sp *SelectorParser) consumeCompoundSelector(nestingType cssparser.NestingTypeType) []*SimpleSelector {
+func (sp *SelectorParser) consumeCompoundSelector(nestingType cssparser.NestingTypeType) ([]*SimpleSelector, SelectorListFlagType) {
 	var selectors []*SimpleSelector
+	var flags SelectorListFlagType
 
 	// See if the compound selector starts with a tag name, universal selector
 	// or the likes (these can only be at the beginning). Note that we don't
@@ -83,7 +92,7 @@ func (sp *SelectorParser) consumeCompoundSelector(nestingType cssparser.NestingT
 	// TODO: A tag name is not valid following a pseudo-element.
 
 	for {
-		selector, err := sp.consumeSimpleSelector()
+		selector, selectorFlags, err := sp.consumeSimpleSelector()
 		if err != nil {
 			break
 		}
@@ -91,12 +100,13 @@ func (sp *SelectorParser) consumeCompoundSelector(nestingType cssparser.NestingT
 		// TODO: handle pseudo-elements
 
 		selector.Relation = SelectorRelationSubSelector
+		flags.Set(selectorFlags)
 		selectors = append(selectors, selector)
 	}
 
 	selectors = prependTypeSelectorIfNeeded(selectors, name, namespace, hasQName)
 
-	return selectors
+	return selectors, flags
 }
 
 // consumeName consumes a name token and returns the name and its namespace if applicable.

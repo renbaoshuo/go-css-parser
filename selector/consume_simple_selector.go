@@ -10,30 +10,38 @@ import (
 )
 
 // ConsumeSimpleSelector consumes a simple selector from the token stream.
-func (sp *SelectorParser) consumeSimpleSelector() (*SimpleSelector, error) {
+func (sp *SelectorParser) consumeSimpleSelector() (*SimpleSelector, SelectorListFlagType, error) {
 	token := sp.tokenStream.Peek()
 	switch token.Type {
 	case csslexer.HashToken:
-		return sp.consumeId()
+		ss, err := sp.consumeId()
+		return ss, 0, err
 
 	case csslexer.DelimiterToken:
 		switch token.Value {
 		case ".":
-			return sp.consumeClass()
+			ss, err := sp.consumeClass()
+			return ss, 0, err
 		case "&":
 			return sp.consumeNestingParent()
 		default:
-			return nil, errors.New("invalid selector: unknown delimiter")
+			return nil, 0, errors.New("invalid selector: unknown delimiter")
 		}
 
 	case csslexer.LeftBracketToken:
-		return sp.consumeAttribute()
+		ss, err := sp.consumeAttribute()
+		return ss, 0, err
 
 	case csslexer.ColonToken:
-		return sp.consumePseudo()
+		var flags SelectorListFlagType
+		ss, err := sp.consumePseudo()
+		if err != nil {
+			return nil, 0, err
+		}
+		return ss, flags, nil
 
 	default:
-		return nil, errors.New("invalid selector: expected simple selector")
+		return nil, 0, errors.New("invalid selector: expected simple selector")
 	}
 }
 
@@ -205,6 +213,6 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, error) {
 	return nil, errors.New("not implemented: SelectorParser.consumePseudo")
 }
 
-func (sp *SelectorParser) consumeNestingParent() (*SimpleSelector, error) {
-	return nil, errors.New("not implemented: SelectorParser.consumeNestingParent")
+func (sp *SelectorParser) consumeNestingParent() (*SimpleSelector, SelectorListFlagType, error) {
+	return nil, 0, errors.New("not implemented: SelectorParser.consumeNestingParent")
 }

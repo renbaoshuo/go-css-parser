@@ -26,5 +26,5 @@ func ConsumeSelector(
 	parentRuleForNesting *cssparser.Rule,
 ) ([]*Selector, error) {
 	tokenStream.ConsumeWhitespace()
-	return NewSelectorParser(tokenStream, parentRuleForNesting).consumeComplexSelectorList()
+	return NewSelectorParser(tokenStream, parentRuleForNesting).consumeComplexSelectorList(nestingType)
 }
