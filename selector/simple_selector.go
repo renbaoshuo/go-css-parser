@@ -53,6 +53,181 @@ const (
 	SelectorAttributeMatchCaseSensitiveAlways
 )
 
+// ===== SelectorPseudoType =====
+
+type SelectorPseudoType int
+
+const (
+	SelectorPseudoUnknown SelectorPseudoType = iota
+	SelectorPseudoActive
+	SelectorPseudoActiveViewTransition
+	SelectorPseudoActiveViewTransitionType
+	SelectorPseudoAfter
+	SelectorPseudoAny
+	SelectorPseudoAnyLink
+	SelectorPseudoAutofill
+	SelectorPseudoAutofillPreviewed
+	SelectorPseudoAutofillSelected
+	SelectorPseudoBackdrop
+	SelectorPseudoBefore
+	SelectorPseudoCheckMark
+	SelectorPseudoChecked
+	SelectorPseudoCornerPresent
+	SelectorPseudoCurrent
+	SelectorPseudoDecrement
+	SelectorPseudoDefault
+	SelectorPseudoDetailsContent
+	SelectorPseudoDialogInTopLayer
+	SelectorPseudoDisabled
+	SelectorPseudoDoubleButton
+	SelectorPseudoDrag
+	SelectorPseudoEmpty
+	SelectorPseudoEnabled
+	SelectorPseudoEnd
+	SelectorPseudoFileSelectorButton
+	SelectorPseudoFirstChild
+	SelectorPseudoFirstLetter
+	SelectorPseudoFirstLine
+	SelectorPseudoFirstOfType
+	SelectorPseudoFirstPage
+	SelectorPseudoFocus
+	SelectorPseudoFocusVisible
+	SelectorPseudoFocusWithin
+	SelectorPseudoFullPageMedia
+	SelectorPseudoHasInterest
+	SelectorPseudoHasSlotted
+	SelectorPseudoHorizontal
+	SelectorPseudoHover
+	SelectorPseudoIncrement
+	SelectorPseudoIndeterminate
+	SelectorPseudoInterestHint
+	SelectorPseudoInvalid
+	SelectorPseudoIs
+	SelectorPseudoLang
+	SelectorPseudoLastChild
+	SelectorPseudoLastOfType
+	SelectorPseudoLeftPage
+	SelectorPseudoLink
+	SelectorPseudoMarker
+	SelectorPseudoModal
+	SelectorPseudoNoButton
+	SelectorPseudoNot
+	SelectorPseudoNthChild // Includes :nth-child(An+B of <selector>)
+	SelectorPseudoNthLastChild
+	SelectorPseudoNthLastOfType
+	SelectorPseudoNthOfType
+	SelectorPseudoOnlyChild
+	SelectorPseudoOnlyOfType
+	SelectorPseudoOptional
+	SelectorPseudoParent // Written as & (in nested rules).
+	SelectorPseudoPart
+	SelectorPseudoPermissionElementInvalidStyle
+	SelectorPseudoPermissionElementOccluded
+	SelectorPseudoPermissionGranted
+	SelectorPseudoPermissionIcon
+	SelectorPseudoPlaceholder
+	SelectorPseudoPlaceholderShown
+	SelectorPseudoReadOnly
+	SelectorPseudoReadWrite
+	SelectorPseudoRequired
+	SelectorPseudoResizer
+	SelectorPseudoRightPage
+	SelectorPseudoRoot
+	SelectorPseudoScope
+	SelectorPseudoScrollbar
+	SelectorPseudoScrollbarButton
+	SelectorPseudoScrollbarCorner
+	SelectorPseudoScrollbarThumb
+	SelectorPseudoScrollbarTrack
+	SelectorPseudoScrollbarTrackPiece
+	SelectorPseudoSearchText
+	SelectorPseudoPickerIcon
+	SelectorPseudoPicker
+	SelectorPseudoSelection
+	SelectorPseudoSelectorFragmentAnchor
+	SelectorPseudoSingleButton
+	SelectorPseudoStart
+	SelectorPseudoState
+	SelectorPseudoTarget
+	SelectorPseudoTargetOfInterest
+
+	// Something that was unparsable, but contained either a nesting
+	// selector (&), or a :scope pseudo-class, and must therefore be kept
+	// for serialization purposes.
+	SelectorPseudoUnparsed
+	SelectorPseudoUserInvalid
+	SelectorPseudoUserValid
+	SelectorPseudoValid
+	SelectorPseudoVertical
+	SelectorPseudoVisited
+	SelectorPseudoWebKitAutofill
+	SelectorPseudoWebkitAnyLink
+	SelectorPseudoWhere
+	SelectorPseudoWindowInactive
+	SelectorPseudoFullScreen
+	SelectorPseudoFullScreenAncestor
+	SelectorPseudoFullscreen
+	SelectorPseudoInRange
+	SelectorPseudoOutOfRange
+	SelectorPseudoPaused
+	SelectorPseudoPictureInPicture
+	SelectorPseudoPlaying
+	SelectorPseudoXrOverlay
+	// Pseudo-elements in UA ShadowRoots. Available in any stylesheets.
+	SelectorPseudoWebKitCustomElement
+	// Pseudo-elements in UA ShadowRoots. Available only in UA stylesheets.
+	SelectorPseudoBlinkInternalElement
+	// Pseudo-element for fragment styling
+	SelectorPseudoColumn
+	SelectorPseudoCue
+	SelectorPseudoDefined
+	SelectorPseudoDir
+	SelectorPseudoFutureCue
+	SelectorPseudoGrammarError
+	SelectorPseudoHas
+	SelectorPseudoHasDatalist
+	SelectorPseudoHighlight
+	SelectorPseudoHost
+	SelectorPseudoHostContext
+	SelectorPseudoHostHasNonAutoAppearance
+	SelectorPseudoIsHtml
+	SelectorPseudoListBox
+	SelectorPseudoMultiSelectFocus
+	SelectorPseudoOpen
+	SelectorPseudoPastCue
+	SelectorPseudoPatching
+	SelectorPseudoPopoverInTopLayer
+	SelectorPseudoPopoverOpen
+	SelectorPseudoRelativeAnchor
+	SelectorPseudoSlotted
+	SelectorPseudoSpatialNavigationFocus
+	SelectorPseudoSpellingError
+	SelectorPseudoTargetText
+	SelectorPseudoVideoPersistent
+	SelectorPseudoVideoPersistentAncestor
+
+	// Active ::scroll-marker styling.
+	// https://drafts.csswg.org/css-overflow-5/#active-scroll-marker
+	SelectorPseudoTargetCurrent
+
+	// The following selectors are used to target pseudo-elements created for
+	// ViewTransition.
+	// See https://drafts.csswg.org/css-view-transitions-1/#pseudo
+	// and https://drafts.csswg.org/css-view-transitions-2
+	// for details.
+	SelectorPseudoViewTransition
+	SelectorPseudoViewTransitionGroup
+	SelectorPseudoViewTransitionGroupChildren
+	SelectorPseudoViewTransitionImagePair
+	SelectorPseudoViewTransitionNew
+	SelectorPseudoViewTransitionOld
+	// Scroll markers pseudos for Carousel
+	SelectorPseudoScrollMarker
+	SelectorPseudoScrollMarkerGroup
+	// Scroll button pseudo for Carousel
+	SelectorPseudoScrollButton
+)
+
 // ===== SimpleSelector =====
 
 // SimpleSelector represents a single simple selector within a compound selector.
@@ -64,8 +239,9 @@ type SimpleSelector struct {
 
 	// Below are optional fields that may be used for specific selector types.
 
-	AttrValue string                     // The value of the attribute, if applicable.
-	AttrMatch SelectorAttributeMatchType // The match type for attribute selectors, if applicable.
+	AttrValue  string                     // The value of the attribute, if applicable.
+	AttrMatch  SelectorAttributeMatchType // The match type for attribute selectors, if applicable.
+	PseudoType SelectorPseudoType         // The type of pseudo-selector, if applicable.
 }
 
 func (s *SimpleSelector) AttrValueString() string {

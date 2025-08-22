@@ -33,11 +33,11 @@ func (sp *SelectorParser) consumeSimpleSelector() (*SimpleSelector, SelectorList
 		return ss, 0, err
 
 	case csslexer.ColonToken:
-		var flags SelectorListFlagType
-		ss, err := sp.consumePseudo()
+		ss, flags, err := sp.consumePseudo()
 		if err != nil {
 			return nil, 0, err
 		}
+		flags.Set(SelectorFlagContainsPseudo)
 		return ss, flags, nil
 
 	default:
@@ -209,8 +209,140 @@ func (sp *SelectorParser) consumeAttributeFlags() SelectorAttributeMatchType {
 
 // consumePseudo consumes a pseudo-class or pseudo-element selector from
 // the token stream.
-func (sp *SelectorParser) consumePseudo() (*SimpleSelector, error) {
-	return nil, errors.New("not implemented: SelectorParser.consumePseudo")
+func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType, error) {
+	sp.tokenStream.Consume() // Consume the colon token
+
+	colons := 1
+	if sp.tokenStream.Peek().Type == csslexer.ColonToken {
+		sp.tokenStream.Consume() // Consume the second colon for pseudo-elements
+		colons++
+	}
+
+	token := sp.tokenStream.Peek()
+	if token.Type != csslexer.IdentToken && token.Type != csslexer.FunctionToken {
+		return nil, 0, errors.New("invalid pseudo selector: expected ident-token or function-token after colon")
+	}
+
+	var flags SelectorListFlagType
+	sel := &SimpleSelector{}
+
+	switch colons {
+	case 1:
+		// Pseudo-class
+		sel.Match = SelectorMatchPseudoClass
+
+	case 2:
+		// Pseudo-element
+		sel.Match = SelectorMatchPseudoElement
+
+	default:
+		return nil, 0, errors.New("invalid pseudo selector: too many colons")
+	}
+
+	pseudoName := strings.ToLower(token.Value)
+	sel.Value = pseudoName
+	sel.PseudoType = parsePseudoType(pseudoName, token.Type == csslexer.FunctionToken)
+
+	if sel.Match == SelectorMatchPseudoElement {
+		// TODO: check if current state disallows pseudo element selectors
+	}
+
+	if token.Type == csslexer.IdentToken {
+		sp.tokenStream.Consume() // Consume the ident token
+
+		switch sel.PseudoType {
+		case SelectorPseudoUnknown:
+			return nil, 0, errors.New("invalid pseudo selector: unknown pseudo type")
+		case SelectorPseudoHost:
+			// TODO: found_host_in_compound_ = true;
+		case SelectorPseudoScope:
+			flags.Set(SelectorFlagContainsScopeOrParent)
+		}
+
+		return sel, flags, nil
+	}
+
+	// for function tokens
+
+	err := sp.tokenStream.ConsumeBlockToEnd(csslexer.RightParenthesisToken, func(ts *token_stream.TokenStream) error {
+		ts.ConsumeWhitespace() // Consume any whitespace before the function arguments
+
+		switch sel.PseudoType {
+		case SelectorPseudoIs:
+			// TODO
+			return nil
+
+		case SelectorPseudoWhere:
+			// TODO
+			return nil
+
+		case SelectorPseudoHost, SelectorPseudoHostContext:
+			// found_host_in_compound_ = true
+			fallthrough
+
+		case SelectorPseudoAny, SelectorPseudoCue:
+			// TODO
+			return nil
+
+		case SelectorPseudoHas:
+			// TODO
+			return nil
+
+		case SelectorPseudoNot:
+			// TODO
+			return nil
+
+		case SelectorPseudoPicker, SelectorPseudoDir, SelectorPseudoState:
+			// TODO
+			return nil
+
+		case SelectorPseudoPart:
+			// TODO
+			return nil
+
+		case SelectorPseudoActiveViewTransitionType:
+			// TODO
+			return nil
+
+		case SelectorPseudoViewTransitionGroup,
+			SelectorPseudoViewTransitionGroupChildren,
+			SelectorPseudoViewTransitionImagePair,
+			SelectorPseudoViewTransitionOld,
+			SelectorPseudoViewTransitionNew:
+			// TODO
+			return nil
+
+		case SelectorPseudoSlotted:
+			// TODO
+			return nil
+
+		case SelectorPseudoLang:
+			// TODO
+			return nil
+
+		case SelectorPseudoNthChild,
+			SelectorPseudoNthLastChild,
+			SelectorPseudoNthOfType,
+			SelectorPseudoNthLastOfType:
+			// TODO
+			return nil
+
+		case SelectorPseudoScrollButton:
+			// TODO
+			return nil
+
+		case SelectorPseudoHighlight:
+			// TODO
+			return nil
+
+		default:
+			return errors.New("invalid pseudo selector: unknown pseudo type")
+		}
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	return sel, flags, nil
 }
 
 func (sp *SelectorParser) consumeNestingParent() (*SimpleSelector, SelectorListFlagType, error) {

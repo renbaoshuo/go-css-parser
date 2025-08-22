@@ -1,16 +1,8 @@
 package selector
 
-func equalIgnoreCase(a, b []rune) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] && a[i] != b[i]+32 && a[i] != b[i]-32 { // ASCII case-insensitive comparison
-			return false
-		}
-	}
-	return true
-}
+import (
+	"strings"
+)
 
 func prependTypeSelectorIfNeeded(selectors []*SimpleSelector, name, namespace string, hasQName bool) []*SimpleSelector {
 	if !hasQName {
@@ -44,4 +36,27 @@ func prependTypeSelectorIfNeeded(selectors []*SimpleSelector, name, namespace st
 	}
 
 	return selectors
+}
+
+func parsePseudoType(name string, hasArguments bool) SelectorPseudoType {
+	if hasArguments {
+		pseudoType, ok := PseudoTypeWithArgumentsMap[name]
+		if ok {
+			return pseudoType
+		}
+	} else {
+		pseudoType, ok := PseudoTypeWithoutArgumentsMap[name]
+		if ok {
+			return pseudoType
+		}
+	}
+
+	if strings.HasPrefix(name, "-webkit-") {
+		return SelectorPseudoWebKitCustomElement
+	}
+	if strings.HasPrefix(name, "-internal-") {
+		return SelectorPseudoBlinkInternalElement
+	}
+
+	return SelectorPseudoUnknown
 }
