@@ -239,9 +239,13 @@ type SimpleSelector struct {
 
 	// Below are optional fields that may be used for specific selector types.
 
-	AttrValue  string                     // The value of the attribute, if applicable.
-	AttrMatch  SelectorAttributeMatchType // The match type for attribute selectors, if applicable.
-	PseudoType SelectorPseudoType         // The type of pseudo-selector, if applicable.
+	AttrValue    string                     // The value of the attribute, if applicable.
+	AttrMatch    SelectorAttributeMatchType // The match type for attribute selectors, if applicable.
+	PseudoType   SelectorPseudoType         // The type of pseudo-selector, if applicable.
+	Argument     string                     // Used for :contains, :lang, :dir, etc.
+	ArgumentList []string                   // Used for :lang
+	SelectorList []*Selector                // For pseudo-classes that take a selector list as an argument, e.g., :is(), :not()
+	IdentList    []string                   // Used for ::part(), :active-view-transition-type().
 }
 
 func (s *SimpleSelector) AttrValueString() string {
