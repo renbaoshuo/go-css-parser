@@ -5,7 +5,7 @@ import (
 
 	"go.baoshuo.dev/csslexer"
 
-	"go.baoshuo.dev/cssparser"
+	"go.baoshuo.dev/cssparser/nesting"
 	"go.baoshuo.dev/cssparser/token_stream"
 )
 
@@ -282,7 +282,7 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 			ts := token_stream.NewTokenStream(in)
 			sp := NewSelectorParser(ts, nil)
 
-			selectors, _ := sp.consumeCompoundSelector(cssparser.NestingTypeNone)
+			selectors, _ := sp.consumeCompoundSelector(nesting.NestingTypeNone)
 
 			if len(selectors) != len(tc.expectedSelectors) {
 				t.Errorf("expected %d selectors, got %d", len(tc.expectedSelectors), len(selectors))
@@ -508,7 +508,7 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 			ts := token_stream.NewTokenStream(in)
 			sp := NewSelectorParser(ts, nil)
 
-			selector, err := sp.consumeComplexSelector(cssparser.NestingTypeNone, true)
+			selector, err := sp.consumeComplexSelector(nesting.NestingTypeNone, true)
 
 			if (err != nil) != tc.expectError {
 				t.Errorf("expected error: %v, got: %v", tc.expectError, err)

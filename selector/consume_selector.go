@@ -5,14 +5,14 @@ import (
 
 	"go.baoshuo.dev/csslexer"
 
-	"go.baoshuo.dev/cssparser"
+	"go.baoshuo.dev/cssparser/nesting"
 )
 
 func (sp *SelectorParser) consumeComplexSelector(
-	nestingType cssparser.NestingTypeType,
+	nestingType nesting.NestingTypeType,
 	firstInComplexSelector bool,
 ) (*Selector, error) {
-	if nestingType != cssparser.NestingTypeNone && sp.peekIsCombinator() {
+	if nestingType != nesting.NestingTypeNone && sp.peekIsCombinator() {
 		// Nested selectors that start with a combinator are to be
 		// interpreted as relative selectors (with the anchor being
 		// the parent selector, i.e., &).
@@ -40,14 +40,14 @@ func (sp *SelectorParser) consumeComplexSelector(
 	}
 
 	// TODO: handle if in nested top-level rules
-	// if nestingType != cssparser.NestingTypeNone {
+	// if nestingType != nesting.NestingTypeNone {
 	// }
 
 	return sel, nil
 }
 
 func (sp *SelectorParser) consumePartialComplexSelector(
-	nestingType cssparser.NestingTypeType,
+	nestingType nesting.NestingTypeType,
 	combinator SelectorRelationType,
 ) ([]*SimpleSelector, SelectorListFlagType, error) {
 	var flags SelectorListFlagType
@@ -77,7 +77,7 @@ func (sp *SelectorParser) consumePartialComplexSelector(
 	return selectors, flags, nil
 }
 
-func (sp *SelectorParser) consumeCompoundSelector(nestingType cssparser.NestingTypeType) ([]*SimpleSelector, SelectorListFlagType) {
+func (sp *SelectorParser) consumeCompoundSelector(nestingType nesting.NestingTypeType) ([]*SimpleSelector, SelectorListFlagType) {
 	var selectors []*SimpleSelector
 	var flags SelectorListFlagType
 
@@ -183,7 +183,7 @@ func (sp *SelectorParser) consumeName() (string, string, bool) {
 	return name, namespace, true
 }
 
-func (sp *SelectorParser) consumeNestedRelativeSelector(nestingType cssparser.NestingTypeType) (*Selector, error) {
+func (sp *SelectorParser) consumeNestedRelativeSelector(nestingType nesting.NestingTypeType) (*Selector, error) {
 	return nil, errors.New("not implemented: SelectorParser.consumeNestedRelativeSelector")
 }
 

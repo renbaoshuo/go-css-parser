@@ -3,6 +3,8 @@ package cssparser
 import (
 	"go.baoshuo.dev/csslexer"
 
+	"go.baoshuo.dev/cssparser/nesting"
+	"go.baoshuo.dev/cssparser/rule"
 	"go.baoshuo.dev/cssparser/token_stream"
 )
 
@@ -16,11 +18,11 @@ func NewParser(input *csslexer.Input) *Parser {
 	}
 }
 
-func (p *Parser) ParseStylesheet() ([]*Rule, error) {
+func (p *Parser) ParseStylesheet() ([]*rule.StyleRule, error) {
 	return p.consumeRuleList(
 		topLevelAllowedRules,
 		true,
-		NestingTypeNone,
+		nesting.NestingTypeNone,
 		nil,
 	)
 }

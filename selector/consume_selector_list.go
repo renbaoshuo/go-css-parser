@@ -3,15 +3,15 @@ package selector
 import (
 	"go.baoshuo.dev/csslexer"
 
-	"go.baoshuo.dev/cssparser"
+	"go.baoshuo.dev/cssparser/nesting"
 )
 
-func (sp *SelectorParser) consumeComplexSelectorList(nestingType cssparser.NestingTypeType) ([]*Selector, error) {
+func (sp *SelectorParser) consumeComplexSelectorList(nestingType nesting.NestingTypeType) ([]*Selector, error) {
 	var selectors []*Selector
 	firstInComplexSelectorList := true
 
 	for {
-		sel, err := sp.consumeComplexSelector(cssparser.NestingTypeNone, firstInComplexSelectorList)
+		sel, err := sp.consumeComplexSelector(nesting.NestingTypeNone, firstInComplexSelectorList)
 		if err != nil || !sp.atEndOfSelector() {
 			sp.tokenStream.SkipUntil(csslexer.LeftBraceToken, csslexer.CommaToken)
 

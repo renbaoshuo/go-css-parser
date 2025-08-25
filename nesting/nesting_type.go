@@ -1,4 +1,4 @@
-package cssparser
+package nesting
 
 type NestingTypeType int
 

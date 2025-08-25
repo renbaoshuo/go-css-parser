@@ -1,18 +1,19 @@
 package selector
 
 import (
-	"go.baoshuo.dev/cssparser"
+	"go.baoshuo.dev/cssparser/nesting"
+	"go.baoshuo.dev/cssparser/rule"
 	"go.baoshuo.dev/cssparser/token_stream"
 )
 
 type SelectorParser struct {
 	tokenStream          *token_stream.TokenStream
-	parentRuleForNesting *cssparser.Rule
+	parentRuleForNesting *rule.StyleRule
 }
 
 func NewSelectorParser(
 	tokenStream *token_stream.TokenStream,
-	parentRuleForNesting *cssparser.Rule,
+	parentRuleForNesting *rule.StyleRule,
 ) *SelectorParser {
 	return &SelectorParser{
 		tokenStream:          tokenStream,
@@ -22,8 +23,8 @@ func NewSelectorParser(
 
 func ConsumeSelector(
 	tokenStream *token_stream.TokenStream,
-	nestingType cssparser.NestingTypeType,
-	parentRuleForNesting *cssparser.Rule,
+	nestingType nesting.NestingTypeType,
+	parentRuleForNesting *rule.StyleRule,
 ) ([]*Selector, error) {
 	tokenStream.ConsumeWhitespace()
 	return NewSelectorParser(tokenStream, parentRuleForNesting).consumeComplexSelectorList(nestingType)
