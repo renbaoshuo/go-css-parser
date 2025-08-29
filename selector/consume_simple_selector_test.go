@@ -10,139 +10,121 @@ import (
 
 func Test_SelectorParser_ConsumeSimpleSelector(t *testing.T) {
 	testcases := []struct {
-		name              string
-		input             string
-		expectedMatch     SelectorMatchType
-		expectedData      string
-		expectedValid     bool
-		expectedAttrValue string
-		expectedAttrMatch SelectorAttributeMatchType
+		name     string
+		input    string
+		expected *SimpleSelector
 	}{
 		{
 			"valid hash selector",
 			"#id",
-			SelectorMatchId,
-			"id",
-			true,
-			"",
-			SelectorAttributeMatchUnknown,
+			&SimpleSelector{
+				Match: SelectorMatchId,
+				Data:  NewSelectorData("id"),
+			},
 		},
 		{
 			"valid class selector",
 			".class",
-			SelectorMatchClass,
-			"class",
-			true,
-			"",
-			SelectorAttributeMatchUnknown,
+			&SimpleSelector{
+				Match: SelectorMatchClass,
+				Data:  NewSelectorData("class"),
+			},
 		},
 		{
 			"valid attribute selector",
 			"[attr=value]",
-			SelectorMatchAttributeExact,
-			"attr",
-			true,
-			"value",
-			SelectorAttributeMatchCaseSensitive,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeExact,
+				Data:  NewSelectorDataAttr("attr", "value", SelectorAttrMatchCaseSensitive),
+			},
 		},
 		{
 			"valid attribute selector with namespace",
 			"[ns|attr=value]",
-			SelectorMatchAttributeExact,
-			"ns|attr",
-			true,
-			"value",
-			SelectorAttributeMatchCaseSensitive,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeExact,
+				Data:  NewSelectorDataAttr("ns|attr", "value", SelectorAttrMatchCaseSensitive),
+			},
 		},
 		{
 			"valid attribute selector with case insensitive match",
 			"[attr|='value' i]",
-			SelectorMatchAttributeHyphen,
-			"attr",
-			true,
-			"value",
-			SelectorAttributeMatchCaseInsensitive,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeHyphen,
+				Data:  NewSelectorDataAttr("attr", "value", SelectorAttrMatchCaseInsensitive),
+			},
 		},
 		{
 			"hash selector with numbers",
 			"#id123",
-			SelectorMatchId,
-			"id123",
-			true,
-			"",
-			SelectorAttributeMatchUnknown,
+			&SimpleSelector{
+				Match: SelectorMatchId,
+				Data:  NewSelectorData("id123"),
+			},
 		},
 		{
 			"class selector with hyphens",
 			".btn-primary",
-			SelectorMatchClass,
-			"btn-primary",
-			true,
-			"",
-			SelectorAttributeMatchUnknown,
+			&SimpleSelector{
+				Match: SelectorMatchClass,
+				Data:  NewSelectorData("btn-primary"),
+			},
 		},
 		{
 			"attribute selector with string value",
 			"[title=\"hello world\"]",
-			SelectorMatchAttributeExact,
-			"title",
-			true,
-			"hello world",
-			SelectorAttributeMatchCaseSensitive,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeExact,
+				Data:  NewSelectorDataAttr("title", "hello world", SelectorAttrMatchCaseSensitive),
+			},
 		},
 		{
 			"attribute selector contains match",
 			"[class*=\"nav\"]",
-			SelectorMatchAttributeContain,
-			"class",
-			true,
-			"nav",
-			SelectorAttributeMatchCaseSensitive,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeContain,
+				Data:  NewSelectorDataAttr("class", "nav", SelectorAttrMatchCaseSensitive),
+			},
 		},
 		{
 			"attribute selector starts with match",
 			"[lang^=\"en\"]",
-			SelectorMatchAttributeBegin,
-			"lang",
-			true,
-			"en",
-			SelectorAttributeMatchCaseSensitive,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeBegin,
+				Data:  NewSelectorDataAttr("lang", "en", SelectorAttrMatchCaseSensitive),
+			},
 		},
 		{
 			"attribute selector ends with match",
 			"[href$=\".pdf\"]",
-			SelectorMatchAttributeEnd,
-			"href",
-			true,
-			".pdf",
-			SelectorAttributeMatchCaseSensitive,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeEnd,
+				Data:  NewSelectorDataAttr("href", ".pdf", SelectorAttrMatchCaseSensitive),
+			},
 		},
 		{
 			"attribute selector word match",
 			"[class~=\"active\"]",
-			SelectorMatchAttributeList,
-			"class",
-			true,
-			"active",
-			SelectorAttributeMatchCaseSensitive,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeList,
+				Data:  NewSelectorDataAttr("class", "active", SelectorAttrMatchCaseSensitive),
+			},
 		},
 		{
 			"attribute selector set match",
 			"[required]",
-			SelectorMatchAttributeSet,
-			"required",
-			true,
-			"",
-			SelectorAttributeMatchUnknown,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeSet,
+				Data:  NewSelectorDataAttr("required", "", SelectorAttrMatchCaseSensitive),
+			},
 		},
 		{
 			"attribute selector with case sensitive flag",
 			"[data-name=\"Value\" s]",
-			SelectorMatchAttributeExact,
-			"data-name",
-			true,
-			"Value",
-			SelectorAttributeMatchCaseSensitiveAlways,
+			&SimpleSelector{
+				Match: SelectorMatchAttributeExact,
+				Data:  NewSelectorDataAttr("data-name", "Value", SelectorAttrMatchCaseSensitiveAlways),
+			},
 		},
 	}
 
@@ -154,29 +136,21 @@ func Test_SelectorParser_ConsumeSimpleSelector(t *testing.T) {
 
 			sel, _, err := sp.consumeSimpleSelector()
 
-			if tc.expectedValid && err != nil {
-				t.Errorf("expected valid, got %v", err)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
 				return
 			}
 
-			if sel != nil {
-				if sel.Match != tc.expectedMatch {
-					t.Errorf("expected type %q, got %q", tc.expectedMatch, sel.Match)
-				}
-				if sel.Value != tc.expectedData {
-					t.Errorf("expected data %q, got %q", tc.expectedData, sel.Value)
-				}
-				if sel.AttrValue != tc.expectedAttrValue {
-					t.Errorf("expected attr value %q, got %q", tc.expectedAttrValue, sel.AttrValue)
-				}
-				if sel.AttrMatch != tc.expectedAttrMatch {
-					t.Errorf("expected attr match %q, got %q", tc.expectedAttrMatch, sel.AttrMatch)
-				}
-
-				t.Logf("selector: %s", sel.String())
-			} else if tc.expectedValid {
+			if sel == nil {
 				t.Error("expected a selector but got nil")
+				return
 			}
+
+			if !sel.Equals(tc.expected) {
+				t.Errorf("selector mismatch:\nexpected: %v\ngot: %v", tc.expected, sel)
+			}
+
+			t.Logf("selector: %s", sel.String())
 		})
 	}
 }
@@ -238,8 +212,12 @@ func Test_SelectorParser_ConsumeId(t *testing.T) {
 				t.Errorf("expected SelectorMatchId, got %v", sel.Match)
 			}
 
-			if sel.Value != tc.expectedId {
-				t.Errorf("expected id %q, got %q", tc.expectedId, sel.Value)
+			if sel.Data == nil {
+				t.Error("expected selector data but got nil")
+			} else if selectorData, ok := sel.Data.(*SelectorData); !ok {
+				t.Error("expected SelectorData")
+			} else if selectorData.Value != tc.expectedId {
+				t.Errorf("expected id %q, got %q", tc.expectedId, selectorData.Value)
 			}
 		})
 	}
@@ -308,8 +286,12 @@ func Test_SelectorParser_ConsumeClass(t *testing.T) {
 				t.Errorf("expected SelectorMatchClass, got %v", sel.Match)
 			}
 
-			if sel.Value != tc.expectedClass {
-				t.Errorf("expected class %q, got %q", tc.expectedClass, sel.Value)
+			if sel.Data == nil {
+				t.Error("expected selector data but got nil")
+			} else if selectorData, ok := sel.Data.(*SelectorData); !ok {
+				t.Error("expected SelectorData")
+			} else if selectorData.Value != tc.expectedClass {
+				t.Errorf("expected class %q, got %q", tc.expectedClass, selectorData.Value)
 			}
 		})
 	}
@@ -322,7 +304,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 		expectedMatch     SelectorMatchType
 		expectedValue     string
 		expectedAttrValue string
-		expectedAttrMatch SelectorAttributeMatchType
+		expectedAttrMatch SelectorAttrMatchType
 		expectError       bool
 	}{
 		{
@@ -331,7 +313,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeSet,
 			"disabled",
 			"",
-			SelectorAttributeMatchUnknown,
+			SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
@@ -340,7 +322,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeExact,
 			"type",
 			"text",
-			SelectorAttributeMatchCaseSensitive,
+			SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
@@ -349,7 +331,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeContain,
 			"class",
 			"btn",
-			SelectorAttributeMatchCaseSensitive,
+			SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
@@ -358,7 +340,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeBegin,
 			"href",
 			"https",
-			SelectorAttributeMatchCaseSensitive,
+			SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
@@ -367,7 +349,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeEnd,
 			"src",
 			".jpg",
-			SelectorAttributeMatchCaseSensitive,
+			SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
@@ -376,7 +358,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeList,
 			"class",
 			"active",
-			SelectorAttributeMatchCaseSensitive,
+			SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
@@ -385,7 +367,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeHyphen,
 			"lang",
 			"en",
-			SelectorAttributeMatchCaseSensitive,
+			SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
@@ -394,7 +376,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeExact,
 			"xml|lang",
 			"en",
-			SelectorAttributeMatchCaseSensitive,
+			SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
@@ -403,7 +385,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeExact,
 			"data-name",
 			"VALUE",
-			SelectorAttributeMatchCaseInsensitive,
+			SelectorAttrMatchCaseInsensitive,
 			false,
 		},
 		{
@@ -412,7 +394,7 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 			SelectorMatchAttributeExact,
 			"title",
 			"Title",
-			SelectorAttributeMatchCaseSensitiveAlways,
+			SelectorAttrMatchCaseSensitiveAlways,
 			false,
 		},
 	}
@@ -441,16 +423,23 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 				t.Errorf("expected match %v, got %v", tc.expectedMatch, sel.Match)
 			}
 
-			if sel.Value != tc.expectedValue {
-				t.Errorf("expected value %q, got %q", tc.expectedValue, sel.Value)
+			if sel.Data == nil {
+				t.Error("expected selector data but got nil")
+			} else if attrData, ok := sel.Data.(*SelectorDataAttr); !ok {
+				t.Error("expected SelectorDataAttribute")
+			} else if attrData.AttrName != tc.expectedValue {
+				t.Errorf("expected value %q, got %q", tc.expectedValue, attrData.AttrName)
 			}
 
-			if sel.AttrValue != tc.expectedAttrValue {
-				t.Errorf("expected attr value %q, got %q", tc.expectedAttrValue, sel.AttrValue)
-			}
-
-			if sel.AttrMatch != tc.expectedAttrMatch {
-				t.Errorf("expected attr match %v, got %v", tc.expectedAttrMatch, sel.AttrMatch)
+			if sel.Data != nil {
+				if attrData, ok := sel.Data.(*SelectorDataAttr); ok {
+					if attrData.AttrValue != tc.expectedAttrValue {
+						t.Errorf("expected attr value %q, got %q", tc.expectedAttrValue, attrData.AttrValue)
+					}
+					if attrData.AttrMatch != tc.expectedAttrMatch {
+						t.Errorf("expected attr match %v, got %v", tc.expectedAttrMatch, attrData.AttrMatch)
+					}
+				}
 			}
 		})
 	}
@@ -730,12 +719,17 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 				t.Errorf("expected match %v, got %v", tc.expectedMatch, sel.Match)
 			}
 
-			if sel.Value != tc.expectedValue {
-				t.Errorf("expected value %q, got %q", tc.expectedValue, sel.Value)
-			}
-
-			if sel.PseudoType != tc.expectedPseudoType {
-				t.Errorf("expected pseudo type %v, got %v", tc.expectedPseudoType, sel.PseudoType)
+			if sel.Data == nil {
+				t.Error("expected selector data but got nil")
+			} else if pseudoData, ok := sel.Data.(*SelectorDataPseudo); !ok {
+				t.Error("expected SelectorDataPseudo")
+			} else {
+				if pseudoData.PseudoName != tc.expectedValue {
+					t.Errorf("expected value %q, got %q", tc.expectedValue, pseudoData.PseudoName)
+				}
+				if pseudoData.PseudoType != tc.expectedPseudoType {
+					t.Errorf("expected pseudo type %v, got %v", tc.expectedPseudoType, pseudoData.PseudoType)
+				}
 			}
 
 			// Note: We need to add SelectorFlagContainsPseudo to the expected flags
@@ -744,7 +738,13 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 			// 	t.Errorf("expected flags %v, got %v", tc.expectedFlags, flags)
 			// }
 
-			t.Logf("selector: %s, pseudo type: %v, flags: %v", sel.String(), sel.PseudoType, flags)
+			pseudoType := SelectorPseudoUnknown
+			if sel.Data != nil {
+				if pseudoData, ok := sel.Data.(*SelectorDataPseudo); ok {
+					pseudoType = pseudoData.PseudoType
+				}
+			}
+			t.Logf("selector: %s, pseudo type: %v, flags: %v", sel.String(), pseudoType, flags)
 		})
 	}
 }

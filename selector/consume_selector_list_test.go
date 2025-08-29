@@ -30,7 +30,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchTag,
-							Value:    "div",
+							Data:     NewSelectorDataTag("", "div"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -49,7 +49,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchTag,
-							Value:    "div",
+							Data:     NewSelectorDataTag("", "div"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -59,7 +59,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchClass,
-							Value:    "class",
+							Data:     NewSelectorData("class"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -69,7 +69,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchId,
-							Value:    "id",
+							Data:     NewSelectorData("id"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -88,12 +88,12 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchTag,
-							Value:    "div",
+							Data:     NewSelectorDataTag("", "div"),
 							Relation: SelectorRelationSubSelector,
 						},
 						{
 							Match:    SelectorMatchClass,
-							Value:    "class",
+							Data:     NewSelectorData("class"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -103,12 +103,12 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchTag,
-							Value:    "p",
+							Data:     NewSelectorDataTag("", "p"),
 							Relation: SelectorRelationSubSelector,
 						},
 						{
 							Match:    SelectorMatchTag,
-							Value:    "span",
+							Data:     NewSelectorDataTag("", "span"),
 							Relation: SelectorRelationChild,
 						},
 					},
@@ -118,12 +118,12 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchClass,
-							Value:    "item",
+							Data:     NewSelectorData("item"),
 							Relation: SelectorRelationSubSelector,
 						},
 						{
 							Match:    SelectorMatchClass,
-							Value:    "next",
+							Data:     NewSelectorData("next"),
 							Relation: SelectorRelationDirectAdjacent,
 						},
 					},
@@ -142,7 +142,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchTag,
-							Value:    "div",
+							Data:     NewSelectorDataTag("", "div"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -152,7 +152,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchClass,
-							Value:    "class",
+							Data:     NewSelectorData("class"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -171,7 +171,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchTag,
-							Value:    "div",
+							Data:     NewSelectorDataTag("", "div"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -181,7 +181,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchClass,
-							Value:    "class",
+							Data:     NewSelectorData("class"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -207,7 +207,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchTag,
-							Value:    "div",
+							Data:     NewSelectorDataTag("", "div"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -226,7 +226,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchTag,
-							Value:    "div",
+							Data:     NewSelectorDataTag("", "div"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -236,7 +236,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 					Selectors: []*SimpleSelector{
 						{
 							Match:    SelectorMatchClass,
-							Value:    "class",
+							Data:     NewSelectorData("class"),
 							Relation: SelectorRelationSubSelector,
 						},
 					},
@@ -277,7 +277,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 						continue
 					}
 					expectedSel := tc.expectedSelectors[i]
-					if !sel.Equal(expectedSel) {
+					if !sel.Equals(expectedSel) {
 						t.Errorf("selector %d mismatch:\nexpected: %v\ngot: %v", i, expectedSel, sel)
 					}
 				}

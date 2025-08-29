@@ -6,6 +6,51 @@ import (
 	"go.baoshuo.dev/cssutil"
 )
 
+// ===== SimpleSelector =====
+
+// SimpleSelector represents a single simple selector within a compound selector.
+// It can represent various types of selectors such as tag, class, id, attribute, etc.
+type SimpleSelector struct {
+	Match    SelectorMatchType    // The type of selector match.
+	Relation SelectorRelationType // The relation to the previous selector in the list.
+	Data     SelectorDataType
+}
+
+func (s *SimpleSelector) String() string {
+	var result strings.Builder
+
+	result.WriteString(s.Relation.String())
+
+	if s.Data != nil {
+		result.WriteString(s.Data.String(s.Match))
+	} else {
+		// This should not happen in the new implementation
+		result.WriteString("[UnknownSelector]")
+	}
+
+	return result.String()
+}
+
+func (s *SimpleSelector) Equals(other *SimpleSelector) bool {
+	if other == nil {
+		return false
+	}
+
+	if s.Match != other.Match || s.Relation != other.Relation {
+		return false
+	}
+
+	// Handle nil data cases
+	if s.Data == nil && other.Data == nil {
+		return true
+	}
+	if s.Data == nil || other.Data == nil {
+		return false
+	}
+
+	return s.Data.Equals(other.Data)
+}
+
 // ===== SelectorMatchType =====
 
 type SelectorMatchType int
@@ -42,276 +87,106 @@ const (
 	SelectorRelationIndirectAdjacent                             // ~ combinator
 )
 
-// ===== SelectorAttributeMatchType =====
-
-type SelectorAttributeMatchType int
-
-const (
-	SelectorAttributeMatchUnknown SelectorAttributeMatchType = iota
-	SelectorAttributeMatchCaseSensitive
-	SelectorAttributeMatchCaseInsensitive
-	SelectorAttributeMatchCaseSensitiveAlways
-)
-
-// ===== SelectorPseudoType =====
-
-type SelectorPseudoType int
-
-const (
-	SelectorPseudoUnknown SelectorPseudoType = iota
-	SelectorPseudoActive
-	SelectorPseudoActiveViewTransition
-	SelectorPseudoActiveViewTransitionType
-	SelectorPseudoAfter
-	SelectorPseudoAny
-	SelectorPseudoAnyLink
-	SelectorPseudoAutofill
-	SelectorPseudoAutofillPreviewed
-	SelectorPseudoAutofillSelected
-	SelectorPseudoBackdrop
-	SelectorPseudoBefore
-	SelectorPseudoCheckMark
-	SelectorPseudoChecked
-	SelectorPseudoCornerPresent
-	SelectorPseudoCurrent
-	SelectorPseudoDecrement
-	SelectorPseudoDefault
-	SelectorPseudoDetailsContent
-	SelectorPseudoDialogInTopLayer
-	SelectorPseudoDisabled
-	SelectorPseudoDoubleButton
-	SelectorPseudoDrag
-	SelectorPseudoEmpty
-	SelectorPseudoEnabled
-	SelectorPseudoEnd
-	SelectorPseudoFileSelectorButton
-	SelectorPseudoFirstChild
-	SelectorPseudoFirstLetter
-	SelectorPseudoFirstLine
-	SelectorPseudoFirstOfType
-	SelectorPseudoFirstPage
-	SelectorPseudoFocus
-	SelectorPseudoFocusVisible
-	SelectorPseudoFocusWithin
-	SelectorPseudoFullPageMedia
-	SelectorPseudoHasInterest
-	SelectorPseudoHasSlotted
-	SelectorPseudoHorizontal
-	SelectorPseudoHover
-	SelectorPseudoIncrement
-	SelectorPseudoIndeterminate
-	SelectorPseudoInterestHint
-	SelectorPseudoInvalid
-	SelectorPseudoIs
-	SelectorPseudoLang
-	SelectorPseudoLastChild
-	SelectorPseudoLastOfType
-	SelectorPseudoLeftPage
-	SelectorPseudoLink
-	SelectorPseudoMarker
-	SelectorPseudoModal
-	SelectorPseudoNoButton
-	SelectorPseudoNot
-	SelectorPseudoNthChild // Includes :nth-child(An+B of <selector>)
-	SelectorPseudoNthLastChild
-	SelectorPseudoNthLastOfType
-	SelectorPseudoNthOfType
-	SelectorPseudoOnlyChild
-	SelectorPseudoOnlyOfType
-	SelectorPseudoOptional
-	SelectorPseudoParent // Written as & (in nested rules).
-	SelectorPseudoPart
-	SelectorPseudoPermissionElementInvalidStyle
-	SelectorPseudoPermissionElementOccluded
-	SelectorPseudoPermissionGranted
-	SelectorPseudoPermissionIcon
-	SelectorPseudoPlaceholder
-	SelectorPseudoPlaceholderShown
-	SelectorPseudoReadOnly
-	SelectorPseudoReadWrite
-	SelectorPseudoRequired
-	SelectorPseudoResizer
-	SelectorPseudoRightPage
-	SelectorPseudoRoot
-	SelectorPseudoScope
-	SelectorPseudoScrollbar
-	SelectorPseudoScrollbarButton
-	SelectorPseudoScrollbarCorner
-	SelectorPseudoScrollbarThumb
-	SelectorPseudoScrollbarTrack
-	SelectorPseudoScrollbarTrackPiece
-	SelectorPseudoSearchText
-	SelectorPseudoPickerIcon
-	SelectorPseudoPicker
-	SelectorPseudoSelection
-	SelectorPseudoSelectorFragmentAnchor
-	SelectorPseudoSingleButton
-	SelectorPseudoStart
-	SelectorPseudoState
-	SelectorPseudoTarget
-	SelectorPseudoTargetOfInterest
-
-	// Something that was unparsable, but contained either a nesting
-	// selector (&), or a :scope pseudo-class, and must therefore be kept
-	// for serialization purposes.
-	SelectorPseudoUnparsed
-	SelectorPseudoUserInvalid
-	SelectorPseudoUserValid
-	SelectorPseudoValid
-	SelectorPseudoVertical
-	SelectorPseudoVisited
-	SelectorPseudoWebKitAutofill
-	SelectorPseudoWebkitAnyLink
-	SelectorPseudoWhere
-	SelectorPseudoWindowInactive
-	SelectorPseudoFullScreen
-	SelectorPseudoFullScreenAncestor
-	SelectorPseudoFullscreen
-	SelectorPseudoInRange
-	SelectorPseudoOutOfRange
-	SelectorPseudoPaused
-	SelectorPseudoPictureInPicture
-	SelectorPseudoPlaying
-	SelectorPseudoXrOverlay
-	// Pseudo-elements in UA ShadowRoots. Available in any stylesheets.
-	SelectorPseudoWebKitCustomElement
-	// Pseudo-elements in UA ShadowRoots. Available only in UA stylesheets.
-	SelectorPseudoBlinkInternalElement
-	// Pseudo-element for fragment styling
-	SelectorPseudoColumn
-	SelectorPseudoCue
-	SelectorPseudoDefined
-	SelectorPseudoDir
-	SelectorPseudoFutureCue
-	SelectorPseudoGrammarError
-	SelectorPseudoHas
-	SelectorPseudoHasDatalist
-	SelectorPseudoHighlight
-	SelectorPseudoHost
-	SelectorPseudoHostContext
-	SelectorPseudoHostHasNonAutoAppearance
-	SelectorPseudoIsHtml
-	SelectorPseudoListBox
-	SelectorPseudoMultiSelectFocus
-	SelectorPseudoOpen
-	SelectorPseudoPastCue
-	SelectorPseudoPatching
-	SelectorPseudoPopoverInTopLayer
-	SelectorPseudoPopoverOpen
-	SelectorPseudoRelativeAnchor
-	SelectorPseudoSlotted
-	SelectorPseudoSpatialNavigationFocus
-	SelectorPseudoSpellingError
-	SelectorPseudoTargetText
-	SelectorPseudoVideoPersistent
-	SelectorPseudoVideoPersistentAncestor
-
-	// Active ::scroll-marker styling.
-	// https://drafts.csswg.org/css-overflow-5/#active-scroll-marker
-	SelectorPseudoTargetCurrent
-
-	// The following selectors are used to target pseudo-elements created for
-	// ViewTransition.
-	// See https://drafts.csswg.org/css-view-transitions-1/#pseudo
-	// and https://drafts.csswg.org/css-view-transitions-2
-	// for details.
-	SelectorPseudoViewTransition
-	SelectorPseudoViewTransitionGroup
-	SelectorPseudoViewTransitionGroupChildren
-	SelectorPseudoViewTransitionImagePair
-	SelectorPseudoViewTransitionNew
-	SelectorPseudoViewTransitionOld
-	// Scroll markers pseudos for Carousel
-	SelectorPseudoScrollMarker
-	SelectorPseudoScrollMarkerGroup
-	// Scroll button pseudo for Carousel
-	SelectorPseudoScrollButton
-)
-
-// ===== SimpleSelector =====
-
-// SimpleSelector represents a single simple selector within a compound selector.
-// It can represent various types of selectors such as tag, class, id, attribute, etc.
-type SimpleSelector struct {
-	Match    SelectorMatchType    // The type of selector match.
-	Value    string               // The value of the selector, e.g., tag name, class name, id, etc.
-	Relation SelectorRelationType // The relation to the previous selector in the list.
-
-	// Below are optional fields that may be used for specific selector types.
-
-	AttrValue    string                     // The value of the attribute, if applicable.
-	AttrMatch    SelectorAttributeMatchType // The match type for attribute selectors, if applicable.
-	PseudoType   SelectorPseudoType         // The type of pseudo-selector, if applicable.
-	Argument     string                     // Used for :contains, :lang, :dir, etc.
-	ArgumentList []string                   // Used for :lang
-	SelectorList []*Selector                // For pseudo-classes that take a selector list as an argument, e.g., :is(), :not()
-	IdentList    []string                   // Used for ::part(), :active-view-transition-type().
-}
-
-func (s *SimpleSelector) AttrValueString() string {
-	return cssutil.SerializeString(s.AttrValue)
-}
-
-func (s *SimpleSelector) String() string {
-	var result strings.Builder
-
-	switch s.Relation {
+func (sr SelectorRelationType) String() string {
+	switch sr {
 	case SelectorRelationSubSelector:
-		// No combinator, just append the selector.
+		return ""
 	case SelectorRelationDescendant:
-		result.WriteString(" ")
+		return " "
 	case SelectorRelationChild:
-		result.WriteString(" > ")
+		return " > "
 	case SelectorRelationDirectAdjacent:
-		result.WriteString(" + ")
+		return " + "
 	case SelectorRelationIndirectAdjacent:
-		result.WriteString(" ~ ")
-	}
-
-	switch s.Match {
-	case SelectorMatchTag:
-		result.WriteString(cssutil.SerializeIdentifier(s.Value))
-	case SelectorMatchUniversalTag:
-		if s.Value != "" {
-			result.WriteString(cssutil.SerializeIdentifier(s.Value) + "|*")
-		} else {
-			result.WriteString("*")
-		}
-	case SelectorMatchId:
-		result.WriteString("#" + cssutil.SerializeIdentifier(s.Value))
-	case SelectorMatchClass:
-		result.WriteString("." + cssutil.SerializeIdentifier(s.Value))
-	case SelectorMatchPseudoClass:
-		result.WriteString(":" + cssutil.SerializeIdentifier(s.Value))
-	case SelectorMatchPseudoElement:
-		result.WriteString("::" + cssutil.SerializeIdentifier(s.Value))
-	case SelectorMatchPagePseudoClass:
-		result.WriteString("@page :" + cssutil.SerializeIdentifier(s.Value))
-	case SelectorMatchAttributeExact:
-		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "=" + s.AttrValueString() + "]")
-	case SelectorMatchAttributeSet:
-		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "]")
-	case SelectorMatchAttributeHyphen:
-		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "|=" + s.AttrValueString() + "]")
-	case SelectorMatchAttributeList:
-		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "~=" + s.AttrValueString() + "]")
-	case SelectorMatchAttributeContain:
-		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "*=" + s.AttrValueString() + "]")
-	case SelectorMatchAttributeBegin:
-		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "^=" + s.AttrValueString() + "]")
-	case SelectorMatchAttributeEnd:
-		result.WriteString("[" + cssutil.SerializeIdentifier(s.Value) + "$=" + s.AttrValueString() + "]")
+		return " ~ "
 	default:
-		result.WriteString("UnknownSelectorMatchType(" + cssutil.SerializeIdentifier(s.Value) + ")")
+		return ""
 	}
-
-	return result.String()
 }
 
-func (s *SimpleSelector) Equal(other *SimpleSelector) bool {
-	return s.Match == other.Match &&
-		s.Value == other.Value &&
-		s.Relation == other.Relation &&
-		s.AttrValue == other.AttrValue &&
-		s.AttrMatch == other.AttrMatch
+// ===== SelectorDataType =====
+
+type SelectorDataType interface {
+	String(match SelectorMatchType) string
+	Equals(other SelectorDataType) bool
+}
+
+// ===== SelectorData =====
+
+type SelectorData struct {
+	Value string // The value of the selector, e.g., tag name, class name, id, etc.
+}
+
+func NewSelectorData(value string) *SelectorData {
+	return &SelectorData{Value: value}
+}
+
+func (d *SelectorData) String(match SelectorMatchType) string {
+	switch match {
+	case SelectorMatchId:
+		return "#" + cssutil.SerializeIdentifier(d.Value)
+	case SelectorMatchClass:
+		return "." + cssutil.SerializeIdentifier(d.Value)
+	case SelectorMatchPseudoClass:
+		return ":" + cssutil.SerializeIdentifier(d.Value)
+	case SelectorMatchPseudoElement:
+		return "::" + cssutil.SerializeIdentifier(d.Value)
+	case SelectorMatchPagePseudoClass:
+		return "@page :" + cssutil.SerializeIdentifier(d.Value)
+	case SelectorMatchTag:
+		return cssutil.SerializeIdentifier(d.Value)
+	case SelectorMatchUniversalTag:
+		if d.Value != "" {
+			return cssutil.SerializeIdentifier(d.Value) + "|*"
+		} else {
+			return "*"
+		}
+	default:
+		return cssutil.SerializeIdentifier(d.Value)
+	}
+}
+
+func (d *SelectorData) Equals(other SelectorDataType) bool {
+	otherData, ok := other.(*SelectorData)
+	if !ok {
+		return false
+	}
+	return d.Value == otherData.Value
+}
+
+// ===== SelectorDataTag =====
+
+type SelectorDataTag struct {
+	Namespace string // The namespace of the tag, if any.
+	TagName   string // The tag name.
+}
+
+func NewSelectorDataTag(namespace, tagName string) *SelectorDataTag {
+	return &SelectorDataTag{
+		Namespace: namespace,
+		TagName:   tagName,
+	}
+}
+
+func (d *SelectorDataTag) String(match SelectorMatchType) string {
+	var tagName string
+	if match == SelectorMatchUniversalTag {
+		tagName = "*"
+	} else {
+		tagName = cssutil.SerializeIdentifier(d.TagName)
+	}
+
+	if d.Namespace != "" {
+		return cssutil.SerializeIdentifier(d.Namespace) + "|" + tagName
+	} else {
+		return tagName
+	}
+}
+
+func (d *SelectorDataTag) Equals(other SelectorDataType) bool {
+	otherData, ok := other.(*SelectorDataTag)
+	if !ok {
+		return false
+	}
+	return d.Namespace == otherData.Namespace && d.TagName == otherData.TagName
 }

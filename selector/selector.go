@@ -59,13 +59,13 @@ func (s *Selector) Prepend(sel *SimpleSelector) {
 	s.Selectors = append([]*SimpleSelector{sel}, s.Selectors...)
 }
 
-func (s *Selector) Equal(other *Selector) bool {
+func (s *Selector) Equals(other *Selector) bool {
 	if s.Flag != other.Flag || len(s.Selectors) != len(other.Selectors) {
 		return false
 	}
 
 	for i, sel := range s.Selectors {
-		if !sel.Equal(other.Selectors[i]) {
+		if !sel.Equals(other.Selectors[i]) {
 			return false
 		}
 	}

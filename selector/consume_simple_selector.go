@@ -55,7 +55,7 @@ func (sp *SelectorParser) consumeId() (*SimpleSelector, error) {
 	token := sp.tokenStream.Consume() // Consume the hash token
 	return &SimpleSelector{
 		Match: SelectorMatchId,
-		Value: token.Value,
+		Data:  NewSelectorData(token.Value),
 	}, nil
 }
 
@@ -76,7 +76,7 @@ func (sp *SelectorParser) consumeClass() (*SimpleSelector, error) {
 	sp.tokenStream.Consume() // Consume the class name token
 	return &SimpleSelector{
 		Match: SelectorMatchClass,
-		Value: token.Value,
+		Data:  NewSelectorData(token.Value),
 	}, nil
 }
 
@@ -116,7 +116,7 @@ func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
 		if sp.tokenStream.AtEnd() {
 			sel = &SimpleSelector{
 				Match: SelectorMatchAttributeSet,
-				Value: nameStr,
+				Data:  NewSelectorDataAttr(nameStr, "", SelectorAttrMatchCaseSensitive),
 			}
 
 			return nil
@@ -140,10 +140,8 @@ func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
 		}
 
 		sel = &SimpleSelector{
-			Match:     matchType,
-			Value:     nameStr,
-			AttrValue: valueToken.Value,
-			AttrMatch: attrMatchType,
+			Match: matchType,
+			Data:  NewSelectorDataAttr(nameStr, valueToken.Value, attrMatchType),
 		}
 		return nil
 	})
@@ -191,19 +189,19 @@ func (sp *SelectorParser) consumeAttributeMatch() SelectorMatchType {
 }
 
 // consumeAttributeFlags consumes the attribute flags from the token stream.
-func (sp *SelectorParser) consumeAttributeFlags() SelectorAttributeMatchType {
+func (sp *SelectorParser) consumeAttributeFlags() SelectorAttrMatchType {
 	if sp.tokenStream.Peek().Type != csslexer.IdentToken {
-		return SelectorAttributeMatchCaseSensitive // Default to case-sensitive if no flags are specified
+		return SelectorAttrMatchCaseSensitive // Default to case-sensitive if no flags are specified
 	}
 
 	token := sp.tokenStream.ConsumeIncludingWhitespace() // Consume the identifier token
 
 	if strings.ToLower(token.Value) == "i" {
-		return SelectorAttributeMatchCaseInsensitive
+		return SelectorAttrMatchCaseInsensitive
 	} else if strings.ToLower(token.Value) == "s" {
-		return SelectorAttributeMatchCaseSensitiveAlways
+		return SelectorAttrMatchCaseSensitiveAlways
 	} else {
-		return SelectorAttributeMatchCaseSensitive // Default to case-sensitive if unknown flag
+		return SelectorAttrMatchCaseSensitive // Default to case-sensitive if unknown flag
 	}
 }
 
@@ -240,8 +238,8 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 	}
 
 	pseudoName := strings.ToLower(token.Value)
-	sel.Value = pseudoName
-	sel.PseudoType = parsePseudoType(pseudoName, token.Type == csslexer.FunctionToken)
+	pseudoType := parsePseudoType(pseudoName, token.Type == csslexer.FunctionToken)
+	sel.Data = NewSelectorDataPseudo(pseudoName, pseudoType)
 
 	if sel.Match == SelectorMatchPseudoElement {
 		// TODO: check if current state disallows pseudo element selectors
@@ -250,7 +248,8 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 	if token.Type == csslexer.IdentToken {
 		sp.tokenStream.Consume() // Consume the ident token
 
-		switch sel.PseudoType {
+		pseudoData := sel.Data.(*SelectorDataPseudo)
+		switch pseudoData.PseudoType {
 		case SelectorPseudoUnknown:
 			return nil, 0, errors.New("invalid pseudo selector: unknown pseudo type")
 		case SelectorPseudoHost:
@@ -267,7 +266,8 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 	err := sp.tokenStream.ConsumeBlockToEnd(csslexer.RightParenthesisToken, func(ts *token_stream.TokenStream) error {
 		ts.ConsumeWhitespace() // Consume any whitespace before the function arguments
 
-		switch sel.PseudoType {
+		pseudoData := sel.Data.(*SelectorDataPseudo)
+		switch pseudoData.PseudoType {
 		case SelectorPseudoIs:
 			// TODO
 			return nil

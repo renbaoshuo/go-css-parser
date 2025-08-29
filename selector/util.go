@@ -10,26 +10,27 @@ func prependTypeSelectorIfNeeded(selectors []*SimpleSelector, name, namespace st
 		return selectors
 	}
 
-	// TODO: Handle namespace uri
-	nameStr := name
-	if namespace != "" {
-		nameStr = namespace + "|" + name
-	}
-
 	// TODO: Check if has :host
 
-	if nameStr != "" {
+	if name != "" {
 		sel := &SimpleSelector{
 			Match:    SelectorMatchTag,
-			Value:    nameStr,
+			Data:     NewSelectorDataTag(namespace, name),
 			Relation: SelectorRelationSubSelector,
 		}
 		selectors = append([]*SimpleSelector{sel}, selectors...) // Prepend the type selector
+	} else if namespace != "" {
+		sel := &SimpleSelector{
+			Match:    SelectorMatchUniversalTag,
+			Data:     NewSelectorDataTag(namespace, ""),
+			Relation: SelectorRelationSubSelector,
+		}
+		selectors = append([]*SimpleSelector{sel}, selectors...) // Prepend the universal selector with namespace
 	} else if len(selectors) == 0 {
 		// If we only have a universal selector, we still need to return it.
 		sel := &SimpleSelector{
 			Match:    SelectorMatchUniversalTag,
-			Value:    namespace,
+			Data:     NewSelectorDataTag("", ""),
 			Relation: SelectorRelationSubSelector,
 		}
 		selectors = append([]*SimpleSelector{sel}, selectors...) // Prepend the universal selector
