@@ -85,6 +85,30 @@ const (
 	SelectorRelationChild                                        // > combinator
 	SelectorRelationDirectAdjacent                               // + combinator
 	SelectorRelationIndirectAdjacent                             // ~ combinator
+
+	// The relation types below are implicit combinators inserted at parse time
+	// before pseudo-elements which match another flat tree element than the
+	// rest of the compound.
+
+	// Implicit combinator inserted before pseudo-elements matching an element
+	// inside a UA shadow tree. This combinator allows the selector matching to
+	// cross a shadow root.
+	//
+	// Examples:
+	// input::placeholder, video::cue(i), video::--webkit-media-controls-panel
+	SelectorRelationUAShadow
+	// Implicit combinator inserted before ::slotted() selectors.
+	SelectorRelationShadowSlot
+	// Implicit combinator inserted before ::part() selectors which allows
+	// matching a ::part in shadow-including descendant tree for #host in
+	// "#host::part(button)".
+	SelectorRelationShadowPart
+
+	// Relative selectors
+	SelectorRelationRelativeDescendant       // leftmost "Space" combinator of relative selector
+	SelectorRelationRelativeChild            // leftmost > combinator of relative selector
+	SelectorRelationRelativeDirectAdjacent   // leftmost + combinator of relative selector
+	SelectorRelationRelativeIndirectAdjacent // leftmost ~ combinator of relative selector
 )
 
 func (sr SelectorRelationType) String() string {
@@ -99,6 +123,14 @@ func (sr SelectorRelationType) String() string {
 		return " + "
 	case SelectorRelationIndirectAdjacent:
 		return " ~ "
+	case SelectorRelationRelativeDescendant:
+		return " " // Same as regular descendant in string form
+	case SelectorRelationRelativeChild:
+		return " > " // Same as regular child in string form
+	case SelectorRelationRelativeDirectAdjacent:
+		return " + " // Same as regular direct adjacent in string form
+	case SelectorRelationRelativeIndirectAdjacent:
+		return " ~ " // Same as regular indirect adjacent in string form
 	default:
 		return ""
 	}

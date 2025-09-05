@@ -61,3 +61,19 @@ func parsePseudoType(name string, hasArguments bool) SelectorPseudoType {
 
 	return SelectorPseudoUnknown
 }
+
+// convertRelationToRelative converts regular relations to relative relations
+func convertRelationToRelative(relation SelectorRelationType) SelectorRelationType {
+	switch relation {
+	case SelectorRelationChild:
+		return SelectorRelationRelativeChild
+	case SelectorRelationDescendant:
+		return SelectorRelationRelativeDescendant
+	case SelectorRelationDirectAdjacent:
+		return SelectorRelationRelativeDirectAdjacent
+	case SelectorRelationIndirectAdjacent:
+		return SelectorRelationRelativeIndirectAdjacent
+	default:
+		return SelectorRelationRelativeDescendant // Default for :has()
+	}
+}

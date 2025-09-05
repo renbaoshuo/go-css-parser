@@ -2,10 +2,12 @@ package selector
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 
 	"go.baoshuo.dev/csslexer"
 
+	"go.baoshuo.dev/cssparser/nesting"
 	"go.baoshuo.dev/cssparser/token_stream"
 )
 
@@ -268,40 +270,118 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 
 		pseudoData := sel.Data.(*SelectorDataPseudo)
 		switch pseudoData.PseudoType {
-		case SelectorPseudoIs:
-			// TODO
-			return nil
-
-		case SelectorPseudoWhere:
-			// TODO
+		case SelectorPseudoIs, SelectorPseudoWhere:
+			// :is() and :where() use forgiving nested selector lists
+			selectorList, err := sp.consumeForgivingNestedSelectorList()
+			if err != nil || !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: failed to parse selector list for :is()/:where()")
+			}
+			pseudoData.SelectorList = selectorList
 			return nil
 
 		case SelectorPseudoHost, SelectorPseudoHostContext:
 			// found_host_in_compound_ = true
-			fallthrough
+			// :host() and :host-context() use compound selector lists
+			selectorList, err := sp.consumeCompoundSelectorList()
+			if err != nil || !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: failed to parse compound selector list for :host()/:host-context()")
+			}
+
+			// :host() can only have single complex selectors
+			if pseudoData.PseudoType == SelectorPseudoHost && len(selectorList) > 1 {
+				return errors.New("invalid pseudo selector: :host() can only contain single complex selector")
+			}
+			if pseudoData.PseudoType == SelectorPseudoHostContext && len(selectorList) > 1 {
+				return errors.New("invalid pseudo selector: :host-context() can only contain single complex selector")
+			}
+
+			pseudoData.SelectorList = selectorList
+			return nil
 
 		case SelectorPseudoAny, SelectorPseudoCue:
-			// TODO
+			// :any() and :cue() use compound selector lists
+			selectorList, err := sp.consumeCompoundSelectorList()
+			if err != nil || !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: failed to parse compound selector list for :any()/:cue()")
+			}
+			pseudoData.SelectorList = selectorList
 			return nil
 
 		case SelectorPseudoHas:
-			// TODO
+			// :has() uses relative selector lists
+			selectorList, err := sp.consumeRelativeSelectorList()
+			if err != nil || !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: failed to parse relative selector list for :has()")
+			}
+			pseudoData.SelectorList = selectorList
+			flags.Set(SelectorFlagContainsPseudo)
+			flags.Set(SelectorFlagContainsComplexSelector)
 			return nil
 
 		case SelectorPseudoNot:
-			// TODO
+			// :not() uses nested selector lists
+			selectorList, err := sp.consumeNestedSelectorList()
+			if err != nil || !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: failed to parse nested selector list for :not()")
+			}
+			pseudoData.SelectorList = selectorList
 			return nil
 
 		case SelectorPseudoPicker, SelectorPseudoDir, SelectorPseudoState:
-			// TODO
+			// These pseudo-classes take a simple identifier argument
+			token := ts.Peek()
+			if token.Type != csslexer.IdentToken {
+				return errors.New("invalid pseudo selector: expected identifier argument")
+			}
+			pseudoData.Argument = token.Value
+			ts.ConsumeIncludingWhitespace()
+			if !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: unexpected tokens after argument")
+			}
 			return nil
 
 		case SelectorPseudoPart:
-			// TODO
+			// ::part() takes a space-separated list of identifiers
+			var parts []string
+			for !ts.AtEnd() {
+				token := ts.Peek()
+				if token.Type != csslexer.IdentToken {
+					return errors.New("invalid pseudo selector: expected identifier in part list")
+				}
+				parts = append(parts, token.Value)
+				ts.ConsumeIncludingWhitespace()
+			}
+			if len(parts) == 0 {
+				return errors.New("invalid pseudo selector: part list cannot be empty")
+			}
+			pseudoData.IdentList = parts
 			return nil
 
 		case SelectorPseudoActiveViewTransitionType:
-			// TODO
+			// :active-view-transition-type() takes a comma-separated list of identifiers
+			var types []string
+			for {
+				token := ts.Peek()
+				if token.Type != csslexer.IdentToken {
+					return errors.New("invalid pseudo selector: expected identifier in type list")
+				}
+				types = append(types, token.Value)
+				ts.ConsumeIncludingWhitespace()
+
+				if ts.AtEnd() {
+					break
+				}
+
+				comma := ts.Peek()
+				if comma.Type != csslexer.CommaToken {
+					return errors.New("invalid pseudo selector: expected comma in type list")
+				}
+				ts.ConsumeIncludingWhitespace()
+				if ts.AtEnd() {
+					return errors.New("invalid pseudo selector: trailing comma in type list")
+				}
+			}
+			pseudoData.IdentList = types
 			return nil
 
 		case SelectorPseudoViewTransitionGroup,
@@ -309,30 +389,217 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			SelectorPseudoViewTransitionImagePair,
 			SelectorPseudoViewTransitionOld,
 			SelectorPseudoViewTransitionNew:
-			// TODO
+			// These pseudo-elements take a name and optional classes
+			var nameAndClasses []string
+
+			// Check for view transition class (starts with '.')
+			if ts.Peek().Type == csslexer.DelimiterToken && ts.Peek().Value == "." {
+				nameAndClasses = append(nameAndClasses, "*") // Universal selector for classes
+			}
+
+			if len(nameAndClasses) == 0 {
+				token := ts.Peek()
+				if token.Type == csslexer.DelimiterToken && token.Value == "*" {
+					nameAndClasses = append(nameAndClasses, "*")
+					ts.Consume()
+				} else if token.Type == csslexer.IdentToken {
+					nameAndClasses = append(nameAndClasses, token.Value)
+					ts.Consume()
+				} else {
+					return errors.New("invalid pseudo selector: expected name or * for view transition")
+				}
+			}
+
+			// Parse view transition classes
+			for !ts.AtEnd() && ts.Peek().Type != csslexer.WhitespaceToken {
+				if ts.Peek().Type != csslexer.DelimiterToken || ts.Consume().Value != "." {
+					return errors.New("invalid pseudo selector: expected '.' before class name")
+				}
+
+				token := ts.Peek()
+				if token.Type != csslexer.IdentToken {
+					return errors.New("invalid pseudo selector: expected class name after '.'")
+				}
+				nameAndClasses = append(nameAndClasses, token.Value)
+				ts.Consume()
+			}
+
+			ts.ConsumeWhitespace()
+			if !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: unexpected tokens after view transition")
+			}
+
+			pseudoData.IdentList = nameAndClasses
 			return nil
 
 		case SelectorPseudoSlotted:
-			// TODO
+			// ::slotted() takes a single compound selector
+			sel, err := sp.consumeCompoundSelectorAsComplexSelector()
+			ts.ConsumeWhitespace()
+			if err != nil || !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: failed to parse compound selector for ::slotted()")
+			}
+			pseudoData.SelectorList = []*Selector{sel}
 			return nil
 
 		case SelectorPseudoLang:
-			// TODO
+			// :lang() supports extended language ranges
+			var langs []string
+
+			for !ts.AtEnd() {
+				var langRange strings.Builder
+				token := ts.Peek()
+
+				// Initial subtag: identifier, string, or wildcard
+				if token.Type == csslexer.IdentToken {
+					value := token.Value
+					// Reject identifiers starting with hyphen
+					if len(value) > 0 && value[0] == '-' {
+						return errors.New("invalid pseudo selector: lang range cannot start with hyphen")
+					}
+					langRange.WriteString(value)
+					ts.Consume()
+				} else if token.Type == csslexer.StringToken {
+					langRange.WriteString(token.Value)
+					ts.Consume()
+				} else if token.Type == csslexer.DelimiterToken && token.Value == "*" {
+					langRange.WriteString("*")
+					ts.Consume()
+				} else {
+					return errors.New("invalid pseudo selector: invalid lang range start")
+				}
+
+				// Parse hyphen-separated subtags
+				for !ts.AtEnd() {
+					next := ts.Peek()
+					if next.Type == csslexer.DelimiterToken && next.Value == "-" {
+						langRange.WriteString("-")
+						ts.Consume()
+
+						if ts.AtEnd() {
+							return errors.New("invalid pseudo selector: trailing hyphen in lang range")
+						}
+
+						afterHyphen := ts.Peek()
+						if afterHyphen.Type == csslexer.IdentToken {
+							langRange.WriteString(afterHyphen.Value)
+							ts.Consume()
+						} else if afterHyphen.Type == csslexer.StringToken {
+							langRange.WriteString(afterHyphen.Value)
+							ts.Consume()
+						} else if afterHyphen.Type == csslexer.DelimiterToken && afterHyphen.Value == "*" {
+							langRange.WriteString("*")
+							ts.Consume()
+						} else if afterHyphen.Type == csslexer.NumberToken {
+							// TODO: Check if it's a positive integer
+							langRange.WriteString(afterHyphen.Value)
+							ts.Consume()
+						} else {
+							return errors.New("invalid pseudo selector: unexpected token after hyphen")
+						}
+					} else if next.Type == csslexer.DelimiterToken && next.Value == "*" && strings.HasSuffix(langRange.String(), "-") {
+						langRange.WriteString("*")
+						ts.Consume()
+					} else if next.Type == csslexer.IdentToken && len(next.Value) > 0 && next.Value[0] == '-' {
+						langRange.WriteString(next.Value)
+						ts.Consume()
+					} else {
+						break
+					}
+				}
+
+				langs = append(langs, langRange.String())
+				ts.ConsumeWhitespace()
+
+				if !ts.AtEnd() {
+					if ts.Peek().Type != csslexer.CommaToken {
+						return errors.New("invalid pseudo selector: expected comma in lang list")
+					}
+					ts.ConsumeIncludingWhitespace()
+					if ts.AtEnd() {
+						return errors.New("invalid pseudo selector: trailing comma in lang list")
+					}
+				}
+			}
+
+			if len(langs) == 0 {
+				return errors.New("invalid pseudo selector: empty lang list")
+			}
+
+			pseudoData.ArgumentList = langs
 			return nil
 
 		case SelectorPseudoNthChild,
 			SelectorPseudoNthLastChild,
 			SelectorPseudoNthOfType,
 			SelectorPseudoNthLastOfType:
-			// TODO
+			// Parse An+B notation
+			a, b, err := sp.consumeANPlusB()
+			if err != nil {
+				return err
+			}
+			ts.ConsumeWhitespace()
+
+			nthData := NewSelectorPseudoNthData(a, b)
+
+			if ts.AtEnd() {
+				// Simple An+B case
+				pseudoData.NthData = nthData
+				return nil
+			}
+
+			// Check for "of <selectors>" syntax (only for :nth-child and :nth-last-child)
+			if pseudoData.PseudoType != SelectorPseudoNthChild &&
+				pseudoData.PseudoType != SelectorPseudoNthLastChild {
+				return errors.New("invalid pseudo selector: unexpected tokens after An+B")
+			}
+
+			subSelectors, err := sp.consumeNthChildOfSelectors()
+			if err != nil {
+				return err
+			}
+			ts.ConsumeWhitespace()
+			if !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: unexpected tokens after selector list")
+			}
+
+			nthData.SelectorList = subSelectors
+			pseudoData.NthData = nthData
 			return nil
 
 		case SelectorPseudoScrollButton:
-			// TODO
+			// ::scroll-button() takes a direction keyword or *
+			token := ts.Peek()
+			if token.Type == csslexer.IdentToken {
+				// Check if it's a valid scroll button direction keyword
+				switch strings.ToLower(token.Value) {
+				case "up", "down", "left", "right", "block-start", "block-end", "inline-start", "inline-end":
+					pseudoData.Argument = token.Value
+				default:
+					return errors.New("invalid pseudo selector: invalid scroll button direction")
+				}
+			} else if token.Type == csslexer.DelimiterToken && token.Value == "*" {
+				pseudoData.Argument = "*"
+			} else {
+				return errors.New("invalid pseudo selector: expected direction or * for scroll button")
+			}
+			ts.ConsumeIncludingWhitespace()
+			if !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: unexpected tokens after scroll button argument")
+			}
 			return nil
 
 		case SelectorPseudoHighlight:
-			// TODO
+			// ::highlight() takes a simple identifier argument
+			token := ts.Peek()
+			if token.Type != csslexer.IdentToken {
+				return errors.New("invalid pseudo selector: expected identifier for highlight")
+			}
+			pseudoData.Argument = token.Value
+			ts.ConsumeIncludingWhitespace()
+			if !ts.AtEnd() {
+				return errors.New("invalid pseudo selector: unexpected tokens after highlight argument")
+			}
 			return nil
 
 		default:
@@ -346,5 +613,209 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 }
 
 func (sp *SelectorParser) consumeNestingParent() (*SimpleSelector, SelectorListFlagType, error) {
-	return nil, 0, errors.New("not implemented: SelectorParser.consumeNestingParent")
+	sp.tokenStream.Consume() // Consume the '&' delimiter token
+
+	var flags SelectorListFlagType
+	flags.Set(SelectorFlagContainsScopeOrParent)
+	flags.Set(SelectorFlagContainsPseudo)          // Nesting parent can contain pseudo selectors
+	flags.Set(SelectorFlagContainsComplexSelector) // Nesting parent can contain complex selectors
+
+	sel := &SimpleSelector{
+		Match: SelectorMatchPseudoClass,
+		Data:  NewSelectorDataPseudo("parent", SelectorPseudoParent), // & is represented as the parent pseudo-class
+	}
+
+	return sel, flags, nil
+}
+
+// consumeANPlusB parses An+B notation for nth-child selectors
+func (sp *SelectorParser) consumeANPlusB() (int, int, error) {
+	if sp.tokenStream.AtEnd() {
+		return 0, 0, errors.New("unexpected end of input")
+	}
+
+	// Check for block tokens first - An+B notation cannot start with block tokens
+	if token_stream.IsBlockToken(sp.tokenStream.Peek().Type) {
+		return 0, 0, errors.New("An+B notation cannot start with block token")
+	}
+
+	token := sp.tokenStream.Consume()
+
+	// Handle simple number case (just B)
+	if token.Type == csslexer.NumberToken {
+		value, err := strconv.Atoi(token.Value)
+		if err != nil {
+			return 0, 0, errors.New("invalid number in An+B notation")
+		}
+		return 0, value, nil
+	}
+
+	// Handle "odd" and "even" keywords
+	if token.Type == csslexer.IdentToken {
+		switch strings.ToLower(token.Value) {
+		case "odd":
+			return 2, 1, nil
+		case "even":
+			return 2, 0, nil
+		}
+
+		// Check if this is an ident starting with 'n' or '-n'
+		lowerValue := strings.ToLower(token.Value)
+		if strings.HasPrefix(lowerValue, "n") || strings.HasPrefix(lowerValue, "-n") {
+			// Parse dimension-like tokens (e.g., "n", "-n", "n-3")
+			if token.Value == "n" {
+				sp.tokenStream.ConsumeWhitespace()
+				return sp.parseOptionalB(1)
+			}
+			if token.Value == "-n" {
+				sp.tokenStream.ConsumeWhitespace()
+				return sp.parseOptionalB(-1)
+			}
+
+			// Parse coefficient and remainder if present
+			return sp.parseNWithCoefficient(token.Value)
+		}
+
+		return 0, 0, errors.New("invalid An+B notation")
+	}
+
+	// Handle dimension tokens (e.g., "2n")
+	if token.Type == csslexer.DimensionToken && strings.HasSuffix(strings.ToLower(token.Value), "n") {
+		// For dimension tokens, we need to parse the numeric part ourselves
+		// since the full token value includes the unit
+		numPart := strings.TrimSuffix(token.Value, "n")
+		numPart = strings.TrimSuffix(strings.ToLower(numPart), "n")
+
+		if numPart == "" || numPart == "+" {
+			sp.tokenStream.ConsumeWhitespace()
+			return sp.parseOptionalB(1)
+		} else if numPart == "-" {
+			sp.tokenStream.ConsumeWhitespace()
+			return sp.parseOptionalB(-1)
+		}
+
+		a, err := strconv.Atoi(numPart)
+		if err != nil {
+			return 0, 0, errors.New("invalid coefficient in dimension token")
+		}
+
+		// Check if next token is a signed number (like "+5" or "-3") which should be combined
+		nextToken := sp.tokenStream.Peek()
+		if nextToken.Type == csslexer.NumberToken {
+			// Handle cases like "2n+5" where +5 comes as a single token
+			bStr := nextToken.Value
+			if strings.HasPrefix(bStr, "+") || strings.HasPrefix(bStr, "-") {
+				sp.tokenStream.Consume()
+				b, err := strconv.Atoi(bStr)
+				if err != nil {
+					return 0, 0, errors.New("invalid B value in dimension+number")
+				}
+				return a, b, nil
+			}
+		}
+
+		sp.tokenStream.ConsumeWhitespace()
+		return sp.parseOptionalB(a)
+	}
+
+	// Handle "+n" case
+	if token.Type == csslexer.DelimiterToken && token.Value == "+" {
+		nextToken := sp.tokenStream.Peek()
+		if nextToken.Type == csslexer.IdentToken && strings.ToLower(nextToken.Value) == "n" {
+			sp.tokenStream.Consume() // consume 'n'
+			sp.tokenStream.ConsumeWhitespace()
+			return sp.parseOptionalB(1)
+		}
+	}
+
+	return 0, 0, errors.New("invalid An+B notation")
+}
+
+// parseNWithCoefficient parses tokens like "2n-3", "-n+1", etc.
+func (sp *SelectorParser) parseNWithCoefficient(value string) (int, int, error) {
+	lower := strings.ToLower(value)
+
+	// Find the 'n'
+	nIndex := strings.Index(lower, "n")
+	if nIndex == -1 {
+		return 0, 0, errors.New("invalid coefficient notation")
+	}
+
+	// Parse coefficient (A)
+	var a int
+	coeffPart := lower[:nIndex]
+	if coeffPart == "" || coeffPart == "+" {
+		a = 1
+	} else if coeffPart == "-" {
+		a = -1
+	} else {
+		var err error
+		a, err = strconv.Atoi(coeffPart)
+		if err != nil {
+			return 0, 0, errors.New("invalid coefficient")
+		}
+	}
+
+	// Parse remainder (B) if present
+	remainder := lower[nIndex+1:]
+	if remainder == "" {
+		sp.tokenStream.ConsumeWhitespace()
+		return sp.parseOptionalB(a)
+	}
+
+	// Direct B parsing from remainder like "n-3"
+	b, err := strconv.Atoi(remainder)
+	if err != nil {
+		return 0, 0, errors.New("invalid constant")
+	}
+
+	return a, b, nil
+}
+
+// parseOptionalB parses optional +B or -B part after An
+func (sp *SelectorParser) parseOptionalB(a int) (int, int, error) {
+	// Check for optional + or - B
+	token := sp.tokenStream.Peek()
+	if token.Type != csslexer.DelimiterToken {
+		return a, 0, nil
+	}
+
+	var sign int
+	switch token.Value {
+	case "+":
+		sign = 1
+		sp.tokenStream.ConsumeIncludingWhitespace()
+	case "-":
+		sign = -1
+		sp.tokenStream.ConsumeIncludingWhitespace()
+	default:
+		return a, 0, nil
+	}
+
+	// Parse the B value
+	bToken := sp.tokenStream.Peek()
+	if bToken.Type != csslexer.NumberToken {
+		return 0, 0, errors.New("expected number after +/- in An+B")
+	}
+
+	bValue, err := strconv.Atoi(bToken.Value)
+	if err != nil {
+		return 0, 0, errors.New("invalid number for B value in An+B")
+	}
+
+	b := bValue * sign
+	sp.tokenStream.Consume()
+
+	return a, b, nil
+}
+
+// consumeNthChildOfSelectors parses the "of <selector-list>" part
+func (sp *SelectorParser) consumeNthChildOfSelectors() ([]*Selector, error) {
+	token := sp.tokenStream.Peek()
+	if token.Type != csslexer.IdentToken || strings.ToLower(token.Value) != "of" {
+		return nil, errors.New("expected 'of' keyword")
+	}
+	sp.tokenStream.ConsumeIncludingWhitespace()
+
+	return sp.consumeComplexSelectorList(nesting.NestingTypeNone)
 }

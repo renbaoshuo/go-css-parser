@@ -34,3 +34,8 @@ func getMatchingBlockEndToken(tt csslexer.TokenType) csslexer.TokenType {
 		return csslexer.DefaultToken // Should not happen
 	}
 }
+
+// isBlockToken returns true if the token is a block-related token
+func IsBlockToken(tt csslexer.TokenType) bool {
+	return isBlockStartToken(tt) || isBlockEndToken(tt)
+}
