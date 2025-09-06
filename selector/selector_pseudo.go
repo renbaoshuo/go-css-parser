@@ -76,7 +76,7 @@ func (d *SelectorDataPseudo) String(match SelectorMatchType) string {
 			for _, arg := range d.ArgumentList {
 				argsStrs = append(argsStrs, cssutil.SerializeString(arg))
 			}
-			result += "(" + cssutil.SerializeCommaSeparatedList(argsStrs) + "))"
+			result += "(" + cssutil.SerializeCommaSeparatedList(argsStrs) + ")"
 		} else if d.Argument != "" {
 			// Fallback to single Argument for backward compatibility
 			result += "(" + cssutil.SerializeString(d.Argument) + ")"
