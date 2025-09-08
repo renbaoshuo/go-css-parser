@@ -19,6 +19,7 @@ var PseudoTypeWithoutArgumentsMap = map[string]SelectorPseudoType{
 	"-webkit-any-link":                              SelectorPseudoWebkitAnyLink,
 	"-webkit-autofill":                              SelectorPseudoWebKitAutofill,
 	"-webkit-drag":                                  SelectorPseudoDrag,
+	"-webkit-file-upload-button":                    SelectorPseudoFileSelectorButton,
 	"-webkit-full-page-media":                       SelectorPseudoFullPageMedia,
 	"-webkit-full-screen":                           SelectorPseudoFullScreen,
 	"-webkit-full-screen-ancestor":                  SelectorPseudoFullScreenAncestor,

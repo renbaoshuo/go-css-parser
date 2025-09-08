@@ -1866,3 +1866,368 @@ func Test_SelectorParser_ConsumePseudo_NthChild_WithOf(t *testing.T) {
 		})
 	}
 }
+
+// Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_IsWhere tests :is() and :where() functional pseudo-classes
+func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_IsWhere(t *testing.T) {
+	testcases := []struct {
+		name            string
+		input           string
+		expected        *SimpleSelector
+		expectError     bool
+	}{
+		{
+			name:  ":is with single selector",
+			input: ":is(.class)",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoClass,
+				Data: &SelectorDataPseudo{
+					PseudoType: SelectorPseudoIs,
+					PseudoName: "is",
+					SelectorList: []*Selector{
+						{
+							Selectors: []*SimpleSelector{
+								{
+									Match: SelectorMatchClass,
+									Data:  NewSelectorData("class"),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  ":is with multiple selectors",
+			input: ":is(.class, #id)",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoClass,
+				Data: &SelectorDataPseudo{
+					PseudoType: SelectorPseudoIs,
+					PseudoName: "is",
+					SelectorList: []*Selector{
+						{
+							Selectors: []*SimpleSelector{
+								{
+									Match: SelectorMatchClass,
+									Data:  NewSelectorData("class"),
+								},
+							},
+						},
+						{
+							Selectors: []*SimpleSelector{
+								{
+									Match: SelectorMatchId,
+									Data:  NewSelectorData("id"),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:        ":is with empty arguments",
+			input:       ":is()",
+			expectError: true,
+		},
+		{
+			name:        ":where with empty arguments",
+			input:       ":where()",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := csslexer.NewInput(tc.input)
+			ts := token_stream.NewTokenStream(in)
+			sp := NewSelectorParser(ts, nil)
+
+			result, _, err := sp.consumeSimpleSelector()
+
+			if tc.expectError {
+				if err == nil {
+					t.Logf("expected error for %q but parsing succeeded", tc.input)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error parsing %q: %v", tc.input, err)
+				return
+			}
+
+			if result == nil {
+				t.Errorf("expected selector but got nil for %q", tc.input)
+				return
+			}
+
+			if !result.Equals(tc.expected) {
+				t.Errorf("selector mismatch for %q:\nexpected: %+v\ngot: %+v", tc.input, tc.expected, result)
+			}
+
+			t.Logf("successfully parsed %q: %s", tc.input, result.String())
+		})
+	}
+}
+
+// Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_LangAndDir tests language and direction pseudo-classes
+func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_LangAndDir(t *testing.T) {
+	testcases := []struct {
+		name     string
+		input    string
+		expected *SimpleSelector
+	}{
+		{
+			name:  ":lang with single language",
+			input: ":lang(en)",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoClass,
+				Data: &SelectorDataPseudo{
+					PseudoType:   SelectorPseudoLang,
+					PseudoName:   "lang",
+					ArgumentList: []string{"en"},
+				},
+			},
+		},
+		{
+			name:  ":lang with multiple languages",
+			input: ":lang(en, fr, de)",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoClass,
+				Data: &SelectorDataPseudo{
+					PseudoType:   SelectorPseudoLang,
+					PseudoName:   "lang",
+					ArgumentList: []string{"en", "fr", "de"},
+				},
+			},
+		},
+		{
+			name:  ":dir with ltr",
+			input: ":dir(ltr)",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoClass,
+				Data: &SelectorDataPseudo{
+					PseudoType: SelectorPseudoDir,
+					PseudoName: "dir",
+					Argument:   "ltr",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := csslexer.NewInput(tc.input)
+			ts := token_stream.NewTokenStream(in)
+			sp := NewSelectorParser(ts, nil)
+
+			result, _, err := sp.consumeSimpleSelector()
+
+			if err != nil {
+				t.Errorf("unexpected error parsing %q: %v", tc.input, err)
+				return
+			}
+
+			if result == nil {
+				t.Errorf("expected selector but got nil for %q", tc.input)
+				return
+			}
+
+			if !result.Equals(tc.expected) {
+				t.Errorf("selector mismatch for %q:\nexpected: %+v\ngot: %+v", tc.input, tc.expected, result)
+			}
+
+			t.Logf("successfully parsed %q: %s", tc.input, result.String())
+		})
+	}
+}
+
+// Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_Part tests ::part() pseudo-element
+func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_Part(t *testing.T) {
+	testcases := []struct {
+		name        string
+		input       string
+		expected    *SimpleSelector
+		expectError bool
+	}{
+		{
+			name:  "::part with single identifier",
+			input: "::part(button)",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoElement,
+				Data: &SelectorDataPseudo{
+					PseudoType: SelectorPseudoPart,
+					PseudoName: "part",
+					IdentList:  []string{"button"},
+				},
+			},
+		},
+		{
+			name:  "::part with multiple identifiers",
+			input: "::part(button primary)",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoElement,
+				Data: &SelectorDataPseudo{
+					PseudoType: SelectorPseudoPart,
+					PseudoName: "part",
+					IdentList:  []string{"button", "primary"},
+				},
+			},
+		},
+		{
+			name:        "::part with empty arguments",
+			input:       "::part()",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := csslexer.NewInput(tc.input)
+			ts := token_stream.NewTokenStream(in)
+			sp := NewSelectorParser(ts, nil)
+
+			result, _, err := sp.consumeSimpleSelector()
+
+			if tc.expectError {
+				if err == nil {
+					t.Logf("expected error for %q but parsing succeeded", tc.input)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error parsing %q: %v", tc.input, err)
+				return
+			}
+
+			if result == nil {
+				t.Errorf("expected selector but got nil for %q", tc.input)
+				return
+			}
+
+			if !result.Equals(tc.expected) {
+				t.Errorf("selector mismatch for %q:\nexpected: %+v\ngot: %+v", tc.input, tc.expected, result)
+			}
+
+			t.Logf("successfully parsed %q: %s", tc.input, result.String())
+		})
+	}
+}
+
+// Test_SelectorParser_ConsumeSimpleSelector_PseudoElementValidation_WebKitSpecific tests WebKit-specific pseudo-elements
+func Test_SelectorParser_ConsumeSimpleSelector_PseudoElementValidation_WebKitSpecific(t *testing.T) {
+	testcases := []struct {
+		name         string
+		input        string
+		expected     *SimpleSelector
+	}{
+		{
+			name:  "::-webkit-scrollbar",
+			input: "::-webkit-scrollbar",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoElement,
+				Data: &SelectorDataPseudo{
+					PseudoType: SelectorPseudoScrollbar,
+					PseudoName: "-webkit-scrollbar",
+				},
+			},
+		},
+		{
+			name:  "::-webkit-file-upload-button",
+			input: "::-webkit-file-upload-button",
+			expected: &SimpleSelector{
+				Match: SelectorMatchPseudoElement,
+				Data: &SelectorDataPseudo{
+					PseudoType: SelectorPseudoFileSelectorButton,
+					PseudoName: "-webkit-file-upload-button",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := csslexer.NewInput(tc.input)
+			ts := token_stream.NewTokenStream(in)
+			sp := NewSelectorParser(ts, nil)
+
+			result, _, err := sp.consumeSimpleSelector()
+
+			if err != nil {
+				t.Errorf("unexpected error parsing %q: %v", tc.input, err)
+				return
+			}
+
+			if result == nil {
+				t.Errorf("expected selector but got nil for %q", tc.input)
+				return
+			}
+
+			if !result.Equals(tc.expected) {
+				t.Errorf("selector mismatch for %q:\nexpected: %+v\ngot: %+v", tc.input, tc.expected, result)
+			}
+
+			t.Logf("successfully parsed %q: %s", tc.input, result.String())
+		})
+	}
+}
+
+// Test_SelectorParser_ConsumeSimpleSelector_ANPlusB_ValidCases tests valid An+B notation parsing
+func Test_SelectorParser_ConsumeSimpleSelector_ANPlusB_ValidCases(t *testing.T) {
+	testcases := []struct {
+		name      string
+		input     string
+		expectedA int
+		expectedB int
+	}{
+		// Keywords
+		{"odd keyword", "odd", 2, 1},
+		{"even keyword", "even", 2, 0},
+		
+		// Simple numbers (B only)
+		{"simple number 0", "0", 0, 0},
+		{"simple number 8", "8", 0, 8},
+		{"positive number", "+12", 0, 12},
+		{"negative number", "-14", 0, -14},
+
+		// Just n (A=1, B=0)
+		{"just n", "n", 1, 0},
+		{"positive n", "+n", 1, 0},
+		{"negative n", "-n", -1, 0},
+		
+		// An+B with positive/negative B
+		{"n with negative B", "n-18", 1, -18},
+		{"coefficient with B", "10n+5", 10, 5},
+		
+		// An+B with spaces
+		{"with spaces positive", "29n + 77", 29, 77},
+		{"with spaces negative", "29n - 77", 29, -77},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := csslexer.NewInput(tc.input)
+			ts := token_stream.NewTokenStream(in)
+			sp := NewSelectorParser(ts, nil)
+
+			a, b, err := sp.consumeANPlusB()
+
+			if err != nil {
+				t.Errorf("unexpected error parsing %q: %v", tc.input, err)
+				return
+			}
+
+			if a != tc.expectedA {
+				t.Errorf("expected A=%d for %q, got A=%d", tc.expectedA, tc.input, a)
+			}
+
+			if b != tc.expectedB {
+				t.Errorf("expected B=%d for %q, got B=%d", tc.expectedB, tc.input, b)
+			}
+
+			t.Logf("successfully parsed %q: A=%d, B=%d", tc.input, a, b)
+		})
+	}
+}

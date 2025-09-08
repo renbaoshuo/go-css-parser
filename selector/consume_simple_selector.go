@@ -663,11 +663,11 @@ func (sp *SelectorParser) consumeANPlusB() (int, int, error) {
 		lowerValue := strings.ToLower(token.Value)
 		if strings.HasPrefix(lowerValue, "n") || strings.HasPrefix(lowerValue, "-n") {
 			// Parse dimension-like tokens (e.g., "n", "-n", "n-3")
-			if token.Value == "n" {
+			if lowerValue == "n" {
 				sp.tokenStream.ConsumeWhitespace()
 				return sp.parseOptionalB(1)
 			}
-			if token.Value == "-n" {
+			if lowerValue == "-n" {
 				sp.tokenStream.ConsumeWhitespace()
 				return sp.parseOptionalB(-1)
 			}
