@@ -2,6 +2,7 @@ package selector
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -270,39 +271,39 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 
 		pseudoData := sel.Data.(*SelectorDataPseudo)
 		switch pseudoData.PseudoType {
-		case SelectorPseudoIs, SelectorPseudoWhere:
+		case SelectorPseudoIs,
+			SelectorPseudoWhere:
 			// :is() and :where() use forgiving nested selector lists
 			selectorList, err := sp.consumeForgivingNestedSelectorList()
-			if err != nil || !ts.AtEnd() {
+			if err != nil {
+				return fmt.Errorf("invalid pseudo selector: %v", err)
+			}
+			if !ts.AtEnd() {
 				return errors.New("invalid pseudo selector: failed to parse selector list for :is()/:where()")
 			}
 			pseudoData.SelectorList = selectorList
 			return nil
 
-		case SelectorPseudoHost, SelectorPseudoHostContext:
+		case SelectorPseudoHost,
+			SelectorPseudoHostContext:
 			// found_host_in_compound_ = true
-			// :host() and :host-context() use compound selector lists
-			selectorList, err := sp.consumeCompoundSelectorList()
-			if err != nil || !ts.AtEnd() {
-				return errors.New("invalid pseudo selector: failed to parse compound selector list for :host()/:host-context()")
-			}
+			fallthrough
 
-			// :host() can only have single complex selectors
-			if pseudoData.PseudoType == SelectorPseudoHost && len(selectorList) > 1 {
-				return errors.New("invalid pseudo selector: :host() can only contain single complex selector")
-			}
-			if pseudoData.PseudoType == SelectorPseudoHostContext && len(selectorList) > 1 {
-				return errors.New("invalid pseudo selector: :host-context() can only contain single complex selector")
-			}
-
-			pseudoData.SelectorList = selectorList
-			return nil
-
-		case SelectorPseudoAny, SelectorPseudoCue:
+		case SelectorPseudoAny,
+			SelectorPseudoCue:
 			// :any() and :cue() use compound selector lists
 			selectorList, err := sp.consumeCompoundSelectorList()
 			if err != nil || !ts.AtEnd() {
-				return errors.New("invalid pseudo selector: failed to parse compound selector list for :any()/:cue()")
+				return errors.New("invalid pseudo selector: failed to parse compound selector list")
+			}
+			if len(selectorList) > 1 {
+				// :host() can only have single complex selectors
+				if pseudoData.PseudoType == SelectorPseudoHost {
+					return errors.New("invalid pseudo selector: :host() can only contain single complex selector")
+				}
+				if pseudoData.PseudoType == SelectorPseudoHostContext {
+					return errors.New("invalid pseudo selector: :host-context() can only contain single complex selector")
+				}
 			}
 			pseudoData.SelectorList = selectorList
 			return nil
@@ -327,7 +328,9 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			pseudoData.SelectorList = selectorList
 			return nil
 
-		case SelectorPseudoPicker, SelectorPseudoDir, SelectorPseudoState:
+		case SelectorPseudoPicker,
+			SelectorPseudoDir,
+			SelectorPseudoState:
 			// These pseudo-classes take a simple identifier argument
 			token := ts.Peek()
 			if token.Type != csslexer.IdentToken {
