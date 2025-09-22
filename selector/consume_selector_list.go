@@ -5,11 +5,12 @@ import (
 
 	"go.baoshuo.dev/csslexer"
 
+	"go.baoshuo.dev/cssparser/css"
 	"go.baoshuo.dev/cssparser/nesting"
 )
 
-func (sp *SelectorParser) consumeComplexSelectorList(nestingType nesting.NestingTypeType) ([]*Selector, error) {
-	var selectors []*Selector
+func (sp *SelectorParser) consumeComplexSelectorList(nestingType nesting.NestingTypeType) ([]*css.Selector, error) {
+	var selectors []*css.Selector
 	firstInComplexSelectorList := true
 
 	for {
@@ -42,8 +43,8 @@ func (sp *SelectorParser) consumeComplexSelectorList(nestingType nesting.Nesting
 
 // consumeCompoundSelectorList parses a comma-separated list of compound selectors
 // Used by :is(), :where(), :any(), :host(), :host-context(), :cue()
-func (sp *SelectorParser) consumeCompoundSelectorList() ([]*Selector, error) {
-	var selectors []*Selector
+func (sp *SelectorParser) consumeCompoundSelectorList() ([]*css.Selector, error) {
+	var selectors []*css.Selector
 
 	sel, err := sp.consumeCompoundSelectorAsComplexSelector()
 	if err != nil {
@@ -67,13 +68,13 @@ func (sp *SelectorParser) consumeCompoundSelectorList() ([]*Selector, error) {
 }
 
 // consumeCompoundSelectorAsComplexSelector wraps a compound selector as a complex selector
-func (sp *SelectorParser) consumeCompoundSelectorAsComplexSelector() (*Selector, error) {
+func (sp *SelectorParser) consumeCompoundSelectorAsComplexSelector() (*css.Selector, error) {
 	compoundSelectors, flags := sp.consumeCompoundSelector(nesting.NestingTypeNone)
 	if len(compoundSelectors) == 0 {
 		return nil, errors.New("expected compound selector")
 	}
 
-	sel := &Selector{}
+	sel := &css.Selector{}
 	sel.Flag.Set(flags)
 	sel.Append(compoundSelectors...)
 
@@ -81,13 +82,13 @@ func (sp *SelectorParser) consumeCompoundSelectorAsComplexSelector() (*Selector,
 }
 
 // consumeNestedSelectorList parses a nested selector list for :not()
-func (sp *SelectorParser) consumeNestedSelectorList() ([]*Selector, error) {
+func (sp *SelectorParser) consumeNestedSelectorList() ([]*css.Selector, error) {
 	return sp.consumeComplexSelectorList(nesting.NestingTypeNone)
 }
 
 // consumeForgivingNestedSelectorList parses a forgiving nested selector list for :is(), :where()
-func (sp *SelectorParser) consumeForgivingNestedSelectorList() ([]*Selector, error) {
-	var selectors []*Selector
+func (sp *SelectorParser) consumeForgivingNestedSelectorList() ([]*css.Selector, error) {
+	var selectors []*css.Selector
 	firstInList := true
 
 	for !sp.tokenStream.AtEnd() {
@@ -114,8 +115,8 @@ func (sp *SelectorParser) consumeForgivingNestedSelectorList() ([]*Selector, err
 }
 
 // consumeRelativeSelectorList parses a relative selector list for :has()
-func (sp *SelectorParser) consumeRelativeSelectorList() ([]*Selector, error) {
-	var selectors []*Selector
+func (sp *SelectorParser) consumeRelativeSelectorList() ([]*css.Selector, error) {
+	var selectors []*css.Selector
 
 	sel, err := sp.consumeRelativeSelector()
 	if err != nil {
@@ -137,13 +138,13 @@ func (sp *SelectorParser) consumeRelativeSelectorList() ([]*Selector, error) {
 }
 
 // consumeRelativeSelector parses a single relative selector
-func (sp *SelectorParser) consumeRelativeSelector() (*Selector, error) {
-	sel := &Selector{}
+func (sp *SelectorParser) consumeRelativeSelector() (*css.Selector, error) {
+	sel := &css.Selector{}
 
 	// Create implicit relative anchor
-	anchorSelector := &SimpleSelector{
-		Match: SelectorMatchPseudoClass,
-		Data:  NewSelectorDataPseudo("-internal-relative-anchor", SelectorPseudoRelativeAnchor),
+	anchorSelector := &css.SimpleSelector{
+		Match: css.SelectorMatchPseudoClass,
+		Data:  css.NewSelectorDataPseudo("-internal-relative-anchor", css.SelectorPseudoRelativeAnchor),
 	}
 	sel.Append(anchorSelector)
 

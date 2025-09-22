@@ -5,6 +5,7 @@ import (
 
 	"go.baoshuo.dev/csslexer"
 
+	"go.baoshuo.dev/cssparser/css"
 	"go.baoshuo.dev/cssparser/nesting"
 	"go.baoshuo.dev/cssparser/token_stream"
 )
@@ -132,22 +133,22 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 	testcases := []struct {
 		name              string
 		input             string
-		expectedSelectors []*SimpleSelector
+		expectedSelectors []*css.SimpleSelector
 		expectedValid     bool
 	}{
 		{
 			"valid compound selector with tag and class",
 			"div.class",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchTag,
-					Data:     NewSelectorDataTag("", "div"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchTag,
+					Data:     css.NewSelectorDataTag("", "div"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 				{
-					Match:    SelectorMatchClass,
-					Data:     NewSelectorData("class"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchClass,
+					Data:     css.NewSelectorData("class"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 			},
 			true,
@@ -155,21 +156,21 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 		{
 			"valid compound selector with id and attribute",
 			"div#id[attr='value']",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchTag,
-					Data:     NewSelectorDataTag("", "div"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchTag,
+					Data:     css.NewSelectorDataTag("", "div"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 				{
-					Match:    SelectorMatchId,
-					Data:     NewSelectorData("id"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchId,
+					Data:     css.NewSelectorData("id"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 				{
-					Match:    SelectorMatchAttributeExact,
-					Relation: SelectorRelationSubSelector,
-					Data:     NewSelectorDataAttr("attr", "value", SelectorAttrMatchCaseSensitive),
+					Match:    css.SelectorMatchAttributeExact,
+					Relation: css.SelectorRelationSubSelector,
+					Data:     css.NewSelectorDataAttr("attr", "value", css.SelectorAttrMatchCaseSensitive),
 				},
 			},
 			true,
@@ -177,11 +178,11 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 		{
 			"valid compound selector with only class",
 			".class",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchClass,
-					Data:     NewSelectorData("class"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchClass,
+					Data:     css.NewSelectorData("class"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 			},
 			true,
@@ -189,21 +190,21 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 		{
 			"compound selector with multiple classes",
 			".btn.primary.large",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchClass,
-					Data:     NewSelectorData("btn"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchClass,
+					Data:     css.NewSelectorData("btn"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 				{
-					Match:    SelectorMatchClass,
-					Data:     NewSelectorData("primary"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchClass,
+					Data:     css.NewSelectorData("primary"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 				{
-					Match:    SelectorMatchClass,
-					Data:     NewSelectorData("large"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchClass,
+					Data:     css.NewSelectorData("large"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 			},
 			true,
@@ -211,26 +212,26 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 		{
 			"compound selector with multiple attributes",
 			"input[type=text][required][disabled]",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchTag,
-					Data:     NewSelectorDataTag("", "input"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchTag,
+					Data:     css.NewSelectorDataTag("", "input"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 				{
-					Match:    SelectorMatchAttributeExact,
-					Relation: SelectorRelationSubSelector,
-					Data:     NewSelectorDataAttr("type", "text", SelectorAttrMatchCaseSensitive),
+					Match:    css.SelectorMatchAttributeExact,
+					Relation: css.SelectorRelationSubSelector,
+					Data:     css.NewSelectorDataAttr("type", "text", css.SelectorAttrMatchCaseSensitive),
 				},
 				{
-					Match:    SelectorMatchAttributeSet,
-					Relation: SelectorRelationSubSelector,
-					Data:     NewSelectorDataAttr("required", "", SelectorAttrMatchCaseSensitive),
+					Match:    css.SelectorMatchAttributeSet,
+					Relation: css.SelectorRelationSubSelector,
+					Data:     css.NewSelectorDataAttr("required", "", css.SelectorAttrMatchCaseSensitive),
 				},
 				{
-					Match:    SelectorMatchAttributeSet,
-					Relation: SelectorRelationSubSelector,
-					Data:     NewSelectorDataAttr("disabled", "", SelectorAttrMatchCaseSensitive),
+					Match:    css.SelectorMatchAttributeSet,
+					Relation: css.SelectorRelationSubSelector,
+					Data:     css.NewSelectorDataAttr("disabled", "", css.SelectorAttrMatchCaseSensitive),
 				},
 			},
 			true,
@@ -238,11 +239,11 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 		{
 			"universal selector",
 			"*",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchUniversalTag,
-					Relation: SelectorRelationSubSelector,
-					Data:     NewSelectorDataTag("", ""),
+					Match:    css.SelectorMatchUniversalTag,
+					Relation: css.SelectorRelationSubSelector,
+					Data:     css.NewSelectorDataTag("", ""),
 				},
 			},
 			true,
@@ -250,11 +251,11 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 		{
 			"universal selector with class",
 			"*.warning",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchClass,
-					Data:     NewSelectorData("warning"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchClass,
+					Data:     css.NewSelectorData("warning"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 			},
 			true,
@@ -262,11 +263,11 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 		{
 			"universal selector with namespace",
 			"ns|*",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchUniversalTag,
-					Data:     NewSelectorDataTag("ns", ""),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchUniversalTag,
+					Data:     css.NewSelectorDataTag("ns", ""),
+					Relation: css.SelectorRelationSubSelector,
 				},
 			},
 			true,
@@ -274,11 +275,11 @@ func Test_SelectorParser_ConsumeCompoundSelector(t *testing.T) {
 		{
 			"id only",
 			"#main",
-			[]*SimpleSelector{
+			[]*css.SimpleSelector{
 				{
-					Match:    SelectorMatchId,
-					Data:     NewSelectorData("main"),
-					Relation: SelectorRelationSubSelector,
+					Match:    css.SelectorMatchId,
+					Data:     css.NewSelectorData("main"),
+					Relation: css.SelectorRelationSubSelector,
 				},
 			},
 			true,
@@ -312,24 +313,24 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 	testcases := []struct {
 		name             string
 		input            string
-		expectedSelector *Selector
+		expectedSelector *css.Selector
 		expectError      bool
 	}{
 		{
 			"valid complex selector with tag and class",
 			"div.class",
-			&Selector{
+			&css.Selector{
 				Flag: 0,
-				Selectors: []*SimpleSelector{
+				Selectors: []*css.SimpleSelector{
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "div"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "div"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchClass,
-						Data:     NewSelectorData("class"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchClass,
+						Data:     css.NewSelectorData("class"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 				},
 			},
@@ -338,23 +339,23 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 		{
 			"valid complex selector with id and attribute",
 			"div#id[attr='value']",
-			&Selector{
+			&css.Selector{
 				Flag: 0,
-				Selectors: []*SimpleSelector{
+				Selectors: []*css.SimpleSelector{
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "div"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "div"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchId,
-						Data:     NewSelectorData("id"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchId,
+						Data:     css.NewSelectorData("id"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchAttributeExact,
-						Relation: SelectorRelationSubSelector,
-						Data:     NewSelectorDataAttr("attr", "value", SelectorAttrMatchCaseSensitive),
+						Match:    css.SelectorMatchAttributeExact,
+						Relation: css.SelectorRelationSubSelector,
+						Data:     css.NewSelectorDataAttr("attr", "value", css.SelectorAttrMatchCaseSensitive),
 					},
 				},
 			},
@@ -363,28 +364,28 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 		{
 			"valid complex selector with combinators",
 			"div > .class + #id ~ [attr='value']",
-			&Selector{
-				Flag: SelectorFlagContainsComplexSelector,
-				Selectors: []*SimpleSelector{
+			&css.Selector{
+				Flag: css.SelectorFlagContainsComplexSelector,
+				Selectors: []*css.SimpleSelector{
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "div"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "div"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchClass,
-						Data:     NewSelectorData("class"),
-						Relation: SelectorRelationChild,
+						Match:    css.SelectorMatchClass,
+						Data:     css.NewSelectorData("class"),
+						Relation: css.SelectorRelationChild,
 					},
 					{
-						Match:    SelectorMatchId,
-						Data:     NewSelectorData("id"),
-						Relation: SelectorRelationDirectAdjacent,
+						Match:    css.SelectorMatchId,
+						Data:     css.NewSelectorData("id"),
+						Relation: css.SelectorRelationDirectAdjacent,
 					},
 					{
-						Match:    SelectorMatchAttributeExact,
-						Relation: SelectorRelationIndirectAdjacent,
-						Data:     NewSelectorDataAttr("attr", "value", SelectorAttrMatchCaseSensitive),
+						Match:    css.SelectorMatchAttributeExact,
+						Relation: css.SelectorRelationIndirectAdjacent,
+						Data:     css.NewSelectorDataAttr("attr", "value", css.SelectorAttrMatchCaseSensitive),
 					},
 				},
 			},
@@ -393,18 +394,18 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 		{
 			"descendant combinator",
 			"nav ul",
-			&Selector{
-				Flag: SelectorFlagContainsComplexSelector,
-				Selectors: []*SimpleSelector{
+			&css.Selector{
+				Flag: css.SelectorFlagContainsComplexSelector,
+				Selectors: []*css.SimpleSelector{
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "nav"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "nav"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "ul"),
-						Relation: SelectorRelationDescendant,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "ul"),
+						Relation: css.SelectorRelationDescendant,
 					},
 				},
 			},
@@ -413,18 +414,18 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 		{
 			"child combinator",
 			"article > p",
-			&Selector{
-				Flag: SelectorFlagContainsComplexSelector,
-				Selectors: []*SimpleSelector{
+			&css.Selector{
+				Flag: css.SelectorFlagContainsComplexSelector,
+				Selectors: []*css.SimpleSelector{
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "article"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "article"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "p"),
-						Relation: SelectorRelationChild,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "p"),
+						Relation: css.SelectorRelationChild,
 					},
 				},
 			},
@@ -433,18 +434,18 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 		{
 			"adjacent sibling combinator",
 			"h1 + p",
-			&Selector{
-				Flag: SelectorFlagContainsComplexSelector,
-				Selectors: []*SimpleSelector{
+			&css.Selector{
+				Flag: css.SelectorFlagContainsComplexSelector,
+				Selectors: []*css.SimpleSelector{
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "h1"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "h1"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "p"),
-						Relation: SelectorRelationDirectAdjacent,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "p"),
+						Relation: css.SelectorRelationDirectAdjacent,
 					},
 				},
 			},
@@ -453,18 +454,18 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 		{
 			"general sibling combinator",
 			"h1 ~ p",
-			&Selector{
-				Flag: SelectorFlagContainsComplexSelector,
-				Selectors: []*SimpleSelector{
+			&css.Selector{
+				Flag: css.SelectorFlagContainsComplexSelector,
+				Selectors: []*css.SimpleSelector{
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "h1"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "h1"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "p"),
-						Relation: SelectorRelationIndirectAdjacent,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "p"),
+						Relation: css.SelectorRelationIndirectAdjacent,
 					},
 				},
 			},
@@ -473,33 +474,33 @@ func Test_SelectorParser_ConsumeComplexSelector(t *testing.T) {
 		{
 			"complex selector with multiple combinators",
 			"main article > header h1.title",
-			&Selector{
-				Flag: SelectorFlagContainsComplexSelector,
-				Selectors: []*SimpleSelector{
+			&css.Selector{
+				Flag: css.SelectorFlagContainsComplexSelector,
+				Selectors: []*css.SimpleSelector{
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "main"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "main"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "article"),
-						Relation: SelectorRelationDescendant,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "article"),
+						Relation: css.SelectorRelationDescendant,
 					},
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "header"),
-						Relation: SelectorRelationChild,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "header"),
+						Relation: css.SelectorRelationChild,
 					},
 					{
-						Match:    SelectorMatchTag,
-						Data:     NewSelectorDataTag("", "h1"),
-						Relation: SelectorRelationDescendant,
+						Match:    css.SelectorMatchTag,
+						Data:     css.NewSelectorDataTag("", "h1"),
+						Relation: css.SelectorRelationDescendant,
 					},
 					{
-						Match:    SelectorMatchClass,
-						Data:     NewSelectorData("title"),
-						Relation: SelectorRelationSubSelector,
+						Match:    css.SelectorMatchClass,
+						Data:     css.NewSelectorData("title"),
+						Relation: css.SelectorRelationSubSelector,
 					},
 				},
 			},
@@ -533,47 +534,47 @@ func Test_SelectorParser_ConsumeCombinator(t *testing.T) {
 	testcases := []struct {
 		name               string
 		input              string
-		expectedCombinator SelectorRelationType
+		expectedCombinator css.SelectorRelationType
 	}{
 		{
 			"child combinator",
 			">",
-			SelectorRelationChild,
+			css.SelectorRelationChild,
 		},
 		{
 			"adjacent sibling combinator",
 			"+",
-			SelectorRelationDirectAdjacent,
+			css.SelectorRelationDirectAdjacent,
 		},
 		{
 			"general sibling combinator",
 			"~",
-			SelectorRelationIndirectAdjacent,
+			css.SelectorRelationIndirectAdjacent,
 		},
 		{
 			"descendant combinator (whitespace)",
 			"   ",
-			SelectorRelationDescendant,
+			css.SelectorRelationDescendant,
 		},
 		{
 			"no combinator",
 			"div",
-			SelectorRelationSubSelector,
+			css.SelectorRelationSubSelector,
 		},
 		{
 			"child combinator with whitespace",
 			"  >  ",
-			SelectorRelationChild,
+			css.SelectorRelationChild,
 		},
 		{
 			"adjacent with whitespace",
 			"  +  ",
-			SelectorRelationDirectAdjacent,
+			css.SelectorRelationDirectAdjacent,
 		},
 		{
 			"general sibling with whitespace",
 			"  ~  ",
-			SelectorRelationIndirectAdjacent,
+			css.SelectorRelationIndirectAdjacent,
 		},
 	}
 

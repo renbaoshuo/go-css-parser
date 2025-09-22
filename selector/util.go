@@ -2,9 +2,11 @@ package selector
 
 import (
 	"strings"
+
+	"go.baoshuo.dev/cssparser/css"
 )
 
-func prependTypeSelectorIfNeeded(selectors []*SimpleSelector, name, namespace string, hasQName bool) []*SimpleSelector {
+func prependTypeSelectorIfNeeded(selectors []*css.SimpleSelector, name, namespace string, hasQName bool) []*css.SimpleSelector {
 	if !hasQName {
 		// If we don't have a qualified name, we don't need to prepend a type selector.
 		return selectors
@@ -13,33 +15,33 @@ func prependTypeSelectorIfNeeded(selectors []*SimpleSelector, name, namespace st
 	// TODO: Check if has :host
 
 	if name != "" {
-		sel := &SimpleSelector{
-			Match:    SelectorMatchTag,
-			Data:     NewSelectorDataTag(namespace, name),
-			Relation: SelectorRelationSubSelector,
+		sel := &css.SimpleSelector{
+			Match:    css.SelectorMatchTag,
+			Data:     css.NewSelectorDataTag(namespace, name),
+			Relation: css.SelectorRelationSubSelector,
 		}
-		selectors = append([]*SimpleSelector{sel}, selectors...) // Prepend the type selector
+		selectors = append([]*css.SimpleSelector{sel}, selectors...) // Prepend the type selector
 	} else if namespace != "" {
-		sel := &SimpleSelector{
-			Match:    SelectorMatchUniversalTag,
-			Data:     NewSelectorDataTag(namespace, ""),
-			Relation: SelectorRelationSubSelector,
+		sel := &css.SimpleSelector{
+			Match:    css.SelectorMatchUniversalTag,
+			Data:     css.NewSelectorDataTag(namespace, ""),
+			Relation: css.SelectorRelationSubSelector,
 		}
-		selectors = append([]*SimpleSelector{sel}, selectors...) // Prepend the universal selector with namespace
+		selectors = append([]*css.SimpleSelector{sel}, selectors...) // Prepend the universal selector with namespace
 	} else if len(selectors) == 0 {
 		// If we only have a universal selector, we still need to return it.
-		sel := &SimpleSelector{
-			Match:    SelectorMatchUniversalTag,
-			Data:     NewSelectorDataTag("", ""),
-			Relation: SelectorRelationSubSelector,
+		sel := &css.SimpleSelector{
+			Match:    css.SelectorMatchUniversalTag,
+			Data:     css.NewSelectorDataTag("", ""),
+			Relation: css.SelectorRelationSubSelector,
 		}
-		selectors = append([]*SimpleSelector{sel}, selectors...) // Prepend the universal selector
+		selectors = append([]*css.SimpleSelector{sel}, selectors...) // Prepend the universal selector
 	}
 
 	return selectors
 }
 
-func parsePseudoType(name string, hasArguments bool) SelectorPseudoType {
+func parsePseudoType(name string, hasArguments bool) css.SelectorPseudoType {
 	if hasArguments {
 		pseudoType, ok := PseudoTypeWithArgumentsMap[name]
 		if ok {
@@ -53,27 +55,27 @@ func parsePseudoType(name string, hasArguments bool) SelectorPseudoType {
 	}
 
 	if strings.HasPrefix(name, "-webkit-") {
-		return SelectorPseudoWebKitCustomElement
+		return css.SelectorPseudoWebKitCustomElement
 	}
 	if strings.HasPrefix(name, "-internal-") {
-		return SelectorPseudoBlinkInternalElement
+		return css.SelectorPseudoBlinkInternalElement
 	}
 
-	return SelectorPseudoUnknown
+	return css.SelectorPseudoUnknown
 }
 
 // convertRelationToRelative converts regular relations to relative relations
-func convertRelationToRelative(relation SelectorRelationType) SelectorRelationType {
+func convertRelationToRelative(relation css.SelectorRelationType) css.SelectorRelationType {
 	switch relation {
-	case SelectorRelationChild:
-		return SelectorRelationRelativeChild
-	case SelectorRelationDescendant:
-		return SelectorRelationRelativeDescendant
-	case SelectorRelationDirectAdjacent:
-		return SelectorRelationRelativeDirectAdjacent
-	case SelectorRelationIndirectAdjacent:
-		return SelectorRelationRelativeIndirectAdjacent
+	case css.SelectorRelationChild:
+		return css.SelectorRelationRelativeChild
+	case css.SelectorRelationDescendant:
+		return css.SelectorRelationRelativeDescendant
+	case css.SelectorRelationDirectAdjacent:
+		return css.SelectorRelationRelativeDirectAdjacent
+	case css.SelectorRelationIndirectAdjacent:
+		return css.SelectorRelationRelativeIndirectAdjacent
 	default:
-		return SelectorRelationRelativeDescendant // Default for :has()
+		return css.SelectorRelationRelativeDescendant // Default for :has()
 	}
 }

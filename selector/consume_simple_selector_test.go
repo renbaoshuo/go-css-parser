@@ -5,6 +5,7 @@ import (
 
 	"go.baoshuo.dev/csslexer"
 
+	"go.baoshuo.dev/cssparser/css"
 	"go.baoshuo.dev/cssparser/token_stream"
 )
 
@@ -12,118 +13,118 @@ func Test_SelectorParser_ConsumeSimpleSelector(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 	}{
 		{
 			"valid hash selector",
 			"#id",
-			&SimpleSelector{
-				Match: SelectorMatchId,
-				Data:  NewSelectorData("id"),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchId,
+				Data:  css.NewSelectorData("id"),
 			},
 		},
 		{
 			"valid class selector",
 			".class",
-			&SimpleSelector{
-				Match: SelectorMatchClass,
-				Data:  NewSelectorData("class"),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchClass,
+				Data:  css.NewSelectorData("class"),
 			},
 		},
 		{
 			"valid attribute selector",
 			"[attr=value]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeExact,
-				Data:  NewSelectorDataAttr("attr", "value", SelectorAttrMatchCaseSensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeExact,
+				Data:  css.NewSelectorDataAttr("attr", "value", css.SelectorAttrMatchCaseSensitive),
 			},
 		},
 		{
 			"valid attribute selector with namespace",
 			"[ns|attr=value]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeExact,
-				Data:  NewSelectorDataAttr("ns|attr", "value", SelectorAttrMatchCaseSensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeExact,
+				Data:  css.NewSelectorDataAttr("ns|attr", "value", css.SelectorAttrMatchCaseSensitive),
 			},
 		},
 		{
 			"valid attribute selector with case insensitive match",
 			"[attr|='value' i]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeHyphen,
-				Data:  NewSelectorDataAttr("attr", "value", SelectorAttrMatchCaseInsensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeHyphen,
+				Data:  css.NewSelectorDataAttr("attr", "value", css.SelectorAttrMatchCaseInsensitive),
 			},
 		},
 		{
 			"hash selector with numbers",
 			"#id123",
-			&SimpleSelector{
-				Match: SelectorMatchId,
-				Data:  NewSelectorData("id123"),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchId,
+				Data:  css.NewSelectorData("id123"),
 			},
 		},
 		{
 			"class selector with hyphens",
 			".btn-primary",
-			&SimpleSelector{
-				Match: SelectorMatchClass,
-				Data:  NewSelectorData("btn-primary"),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchClass,
+				Data:  css.NewSelectorData("btn-primary"),
 			},
 		},
 		{
 			"attribute selector with string value",
 			"[title=\"hello world\"]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeExact,
-				Data:  NewSelectorDataAttr("title", "hello world", SelectorAttrMatchCaseSensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeExact,
+				Data:  css.NewSelectorDataAttr("title", "hello world", css.SelectorAttrMatchCaseSensitive),
 			},
 		},
 		{
 			"attribute selector contains match",
 			"[class*=\"nav\"]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeContain,
-				Data:  NewSelectorDataAttr("class", "nav", SelectorAttrMatchCaseSensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeContain,
+				Data:  css.NewSelectorDataAttr("class", "nav", css.SelectorAttrMatchCaseSensitive),
 			},
 		},
 		{
 			"attribute selector starts with match",
 			"[lang^=\"en\"]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeBegin,
-				Data:  NewSelectorDataAttr("lang", "en", SelectorAttrMatchCaseSensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeBegin,
+				Data:  css.NewSelectorDataAttr("lang", "en", css.SelectorAttrMatchCaseSensitive),
 			},
 		},
 		{
 			"attribute selector ends with match",
 			"[href$=\".pdf\"]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeEnd,
-				Data:  NewSelectorDataAttr("href", ".pdf", SelectorAttrMatchCaseSensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeEnd,
+				Data:  css.NewSelectorDataAttr("href", ".pdf", css.SelectorAttrMatchCaseSensitive),
 			},
 		},
 		{
 			"attribute selector word match",
 			"[class~=\"active\"]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeList,
-				Data:  NewSelectorDataAttr("class", "active", SelectorAttrMatchCaseSensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeList,
+				Data:  css.NewSelectorDataAttr("class", "active", css.SelectorAttrMatchCaseSensitive),
 			},
 		},
 		{
 			"attribute selector set match",
 			"[required]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeSet,
-				Data:  NewSelectorDataAttr("required", "", SelectorAttrMatchCaseSensitive),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeSet,
+				Data:  css.NewSelectorDataAttr("required", "", css.SelectorAttrMatchCaseSensitive),
 			},
 		},
 		{
 			"attribute selector with case sensitive flag",
 			"[data-name=\"Value\" s]",
-			&SimpleSelector{
-				Match: SelectorMatchAttributeExact,
-				Data:  NewSelectorDataAttr("data-name", "Value", SelectorAttrMatchCaseSensitiveAlways),
+			&css.SimpleSelector{
+				Match: css.SelectorMatchAttributeExact,
+				Data:  css.NewSelectorDataAttr("data-name", "Value", css.SelectorAttrMatchCaseSensitiveAlways),
 			},
 		},
 	}
@@ -208,13 +209,13 @@ func Test_SelectorParser_ConsumeId(t *testing.T) {
 				return
 			}
 
-			if sel.Match != SelectorMatchId {
-				t.Errorf("expected SelectorMatchId, got %v", sel.Match)
+			if sel.Match != css.SelectorMatchId {
+				t.Errorf("expected css.SelectorMatchId, got %v", sel.Match)
 			}
 
 			if sel.Data == nil {
 				t.Error("expected selector data but got nil")
-			} else if selectorData, ok := sel.Data.(*SelectorData); !ok {
+			} else if selectorData, ok := sel.Data.(*css.SelectorData); !ok {
 				t.Error("expected SelectorData")
 			} else if selectorData.Value != tc.expectedId {
 				t.Errorf("expected id %q, got %q", tc.expectedId, selectorData.Value)
@@ -282,13 +283,13 @@ func Test_SelectorParser_ConsumeClass(t *testing.T) {
 				return
 			}
 
-			if sel.Match != SelectorMatchClass {
-				t.Errorf("expected SelectorMatchClass, got %v", sel.Match)
+			if sel.Match != css.SelectorMatchClass {
+				t.Errorf("expected css.SelectorMatchClass, got %v", sel.Match)
 			}
 
 			if sel.Data == nil {
 				t.Error("expected selector data but got nil")
-			} else if selectorData, ok := sel.Data.(*SelectorData); !ok {
+			} else if selectorData, ok := sel.Data.(*css.SelectorData); !ok {
 				t.Error("expected SelectorData")
 			} else if selectorData.Value != tc.expectedClass {
 				t.Errorf("expected class %q, got %q", tc.expectedClass, selectorData.Value)
@@ -301,100 +302,100 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 	testcases := []struct {
 		name              string
 		input             string
-		expectedMatch     SelectorMatchType
+		expectedMatch     css.SelectorMatchType
 		expectedValue     string
 		expectedAttrValue string
-		expectedAttrMatch SelectorAttrMatchType
+		expectedAttrMatch css.SelectorAttrMatchType
 		expectError       bool
 	}{
 		{
 			"attribute exists",
 			"[disabled]",
-			SelectorMatchAttributeSet,
+			css.SelectorMatchAttributeSet,
 			"disabled",
 			"",
-			SelectorAttrMatchCaseSensitive,
+			css.SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
 			"attribute exact match",
 			"[type=\"text\"]",
-			SelectorMatchAttributeExact,
+			css.SelectorMatchAttributeExact,
 			"type",
 			"text",
-			SelectorAttrMatchCaseSensitive,
+			css.SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
 			"attribute contains",
 			"[class*=\"btn\"]",
-			SelectorMatchAttributeContain,
+			css.SelectorMatchAttributeContain,
 			"class",
 			"btn",
-			SelectorAttrMatchCaseSensitive,
+			css.SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
 			"attribute starts with",
 			"[href^=\"https\"]",
-			SelectorMatchAttributeBegin,
+			css.SelectorMatchAttributeBegin,
 			"href",
 			"https",
-			SelectorAttrMatchCaseSensitive,
+			css.SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
 			"attribute ends with",
 			"[src$=\".jpg\"]",
-			SelectorMatchAttributeEnd,
+			css.SelectorMatchAttributeEnd,
 			"src",
 			".jpg",
-			SelectorAttrMatchCaseSensitive,
+			css.SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
 			"attribute word match",
 			"[class~=\"active\"]",
-			SelectorMatchAttributeList,
+			css.SelectorMatchAttributeList,
 			"class",
 			"active",
-			SelectorAttrMatchCaseSensitive,
+			css.SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
 			"attribute hyphen match",
 			"[lang|=\"en\"]",
-			SelectorMatchAttributeHyphen,
+			css.SelectorMatchAttributeHyphen,
 			"lang",
 			"en",
-			SelectorAttrMatchCaseSensitive,
+			css.SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
 			"attribute with namespace",
 			"[xml|lang=\"en\"]",
-			SelectorMatchAttributeExact,
+			css.SelectorMatchAttributeExact,
 			"xml|lang",
 			"en",
-			SelectorAttrMatchCaseSensitive,
+			css.SelectorAttrMatchCaseSensitive,
 			false,
 		},
 		{
 			"attribute case insensitive",
 			"[data-name=\"VALUE\" i]",
-			SelectorMatchAttributeExact,
+			css.SelectorMatchAttributeExact,
 			"data-name",
 			"VALUE",
-			SelectorAttrMatchCaseInsensitive,
+			css.SelectorAttrMatchCaseInsensitive,
 			false,
 		},
 		{
 			"attribute case sensitive always",
 			"[title=\"Title\" s]",
-			SelectorMatchAttributeExact,
+			css.SelectorMatchAttributeExact,
 			"title",
 			"Title",
-			SelectorAttrMatchCaseSensitiveAlways,
+			css.SelectorAttrMatchCaseSensitiveAlways,
 			false,
 		},
 	}
@@ -425,14 +426,14 @@ func Test_SelectorParser_ConsumeAttribute(t *testing.T) {
 
 			if sel.Data == nil {
 				t.Error("expected selector data but got nil")
-			} else if attrData, ok := sel.Data.(*SelectorDataAttr); !ok {
+			} else if attrData, ok := sel.Data.(*css.SelectorDataAttr); !ok {
 				t.Error("expected SelectorDataAttribute")
 			} else if attrData.AttrName != tc.expectedValue {
 				t.Errorf("expected value %q, got %q", tc.expectedValue, attrData.AttrName)
 			}
 
 			if sel.Data != nil {
-				if attrData, ok := sel.Data.(*SelectorDataAttr); ok {
+				if attrData, ok := sel.Data.(*css.SelectorDataAttr); ok {
 					if attrData.AttrValue != tc.expectedAttrValue {
 						t.Errorf("expected attr value %q, got %q", tc.expectedAttrValue, attrData.AttrValue)
 					}
@@ -449,65 +450,65 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 	testcases := []struct {
 		name               string
 		input              string
-		expectedMatch      SelectorMatchType
+		expectedMatch      css.SelectorMatchType
 		expectedValue      string
-		expectedPseudoType SelectorPseudoType
-		expectedFlags      SelectorListFlagType
+		expectedPseudoType css.SelectorPseudoType
+		expectedFlags      css.SelectorListFlagType
 		expectError        bool
 	}{
 		// Test pseudo-classes (single colon)
 		{
 			"active pseudo-class",
 			":active",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"active",
-			SelectorPseudoActive,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoActive,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"hover pseudo-class",
 			":hover",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"hover",
-			SelectorPseudoHover,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoHover,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"focus pseudo-class",
 			":focus",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"focus",
-			SelectorPseudoFocus,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoFocus,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"first-child pseudo-class",
 			":first-child",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"first-child",
-			SelectorPseudoFirstChild,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoFirstChild,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"root pseudo-class",
 			":root",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"root",
-			SelectorPseudoRoot,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoRoot,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"scope pseudo-class with flags",
 			":scope",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"scope",
-			SelectorPseudoScope,
-			SelectorFlagContainsPseudo | SelectorFlagContainsScopeOrParent,
+			css.SelectorPseudoScope,
+			css.SelectorFlagContainsPseudo | css.SelectorFlagContainsScopeOrParent,
 			false,
 		},
 
@@ -515,37 +516,37 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 		{
 			"before pseudo-element",
 			"::before",
-			SelectorMatchPseudoElement,
+			css.SelectorMatchPseudoElement,
 			"before",
-			SelectorPseudoBefore,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoBefore,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"after pseudo-element",
 			"::after",
-			SelectorMatchPseudoElement,
+			css.SelectorMatchPseudoElement,
 			"after",
-			SelectorPseudoAfter,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoAfter,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"first-line pseudo-element",
 			"::first-line",
-			SelectorMatchPseudoElement,
+			css.SelectorMatchPseudoElement,
 			"first-line",
-			SelectorPseudoFirstLine,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoFirstLine,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"first-letter pseudo-element",
 			"::first-letter",
-			SelectorMatchPseudoElement,
+			css.SelectorMatchPseudoElement,
 			"first-letter",
-			SelectorPseudoFirstLetter,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoFirstLetter,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 
@@ -553,64 +554,64 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 		{
 			"nth-child pseudo-class with function",
 			":nth-child(2n+1)",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"nth-child",
-			SelectorPseudoNthChild,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoNthChild,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"not pseudo-class with function",
 			":not(.class)",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"not",
-			SelectorPseudoNot,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoNot,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"is pseudo-class with function",
 			":is(h1, h2)",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"is",
-			SelectorPseudoIs,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoIs,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"where pseudo-class with function",
 			":where(.foo)",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"where",
-			SelectorPseudoWhere,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoWhere,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"has pseudo-class with function",
 			":has(> .child)",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"has",
-			SelectorPseudoHas,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoHas,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"lang pseudo-class with function",
 			":lang(en)",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"lang",
-			SelectorPseudoLang,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoLang,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"host pseudo-class with function",
 			":host(.class)",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"host",
-			SelectorPseudoHost,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoHost,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 
@@ -618,10 +619,10 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 		{
 			"webkit-scrollbar pseudo-element",
 			"::-webkit-scrollbar",
-			SelectorMatchPseudoElement,
+			css.SelectorMatchPseudoElement,
 			"-webkit-scrollbar",
-			SelectorPseudoScrollbar,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoScrollbar,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 
@@ -629,19 +630,19 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 		{
 			"uppercase pseudo-class",
 			":HOVER",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"hover",
-			SelectorPseudoHover,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoHover,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"mixed case pseudo-element",
 			"::Before",
-			SelectorMatchPseudoElement,
+			css.SelectorMatchPseudoElement,
 			"before",
-			SelectorPseudoBefore,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoBefore,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 
@@ -649,9 +650,9 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 		{
 			"unknown pseudo-class",
 			":unknown",
-			SelectorMatchPseudoClass,
+			css.SelectorMatchPseudoClass,
 			"unknown",
-			SelectorPseudoUnknown,
+			css.SelectorPseudoUnknown,
 			0,
 			true,
 		},
@@ -660,7 +661,7 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 			":123",
 			0,
 			"",
-			SelectorPseudoUnknown,
+			css.SelectorPseudoUnknown,
 			0,
 			true,
 		},
@@ -669,7 +670,7 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 			":::invalid",
 			0,
 			"",
-			SelectorPseudoUnknown,
+			css.SelectorPseudoUnknown,
 			0,
 			true,
 		},
@@ -678,19 +679,19 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 		{
 			"webkit-input-placeholder (custom element)",
 			"::-webkit-input-placeholder",
-			SelectorMatchPseudoElement,
+			css.SelectorMatchPseudoElement,
 			"-webkit-input-placeholder",
-			SelectorPseudoWebKitCustomElement,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoWebKitCustomElement,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 		{
 			"internal pseudo-element",
 			"::-internal-autofill-previewed",
-			SelectorMatchPseudoElement,
+			css.SelectorMatchPseudoElement,
 			"-internal-autofill-previewed",
-			SelectorPseudoAutofillPreviewed,
-			SelectorFlagContainsPseudo,
+			css.SelectorPseudoAutofillPreviewed,
+			css.SelectorFlagContainsPseudo,
 			false,
 		},
 	}
@@ -721,7 +722,7 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 
 			if sel.Data == nil {
 				t.Error("expected selector data but got nil")
-			} else if pseudoData, ok := sel.Data.(*SelectorDataPseudo); !ok {
+			} else if pseudoData, ok := sel.Data.(*css.SelectorDataPseudo); !ok {
 				t.Error("expected SelectorDataPseudo")
 			} else {
 				if pseudoData.PseudoName != tc.expectedValue {
@@ -732,15 +733,15 @@ func Test_SelectorParser_ConsumePseudo(t *testing.T) {
 				}
 			}
 
-			// Note: We need to add SelectorFlagContainsPseudo to the expected flags
+			// Note: We need to add css.SelectorFlagContainsPseudo to the expected flags
 			// since it's added by the consumeSimpleSelector function
 			// if flags != tc.expectedFlags {
 			// 	t.Errorf("expected flags %v, got %v", tc.expectedFlags, flags)
 			// }
 
-			pseudoType := SelectorPseudoUnknown
+			pseudoType := css.SelectorPseudoUnknown
 			if sel.Data != nil {
-				if pseudoData, ok := sel.Data.(*SelectorDataPseudo); ok {
+				if pseudoData, ok := sel.Data.(*css.SelectorDataPseudo); ok {
 					pseudoType = pseudoData.PseudoType
 				}
 			}
@@ -753,23 +754,23 @@ func Test_SelectorParser_ConsumePseudo_Is_Where(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 		hasError bool
 	}{
 		{
 			name:  ":is() with single selector",
 			input: ":is(.class)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoIs,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoIs,
 					PseudoName: "is",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("class"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("class"),
 								},
 							},
 						},
@@ -780,25 +781,25 @@ func Test_SelectorParser_ConsumePseudo_Is_Where(t *testing.T) {
 		{
 			name:  ":where() with multiple selectors",
 			input: ":where(.class, #id)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoWhere,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoWhere,
 					PseudoName: "where",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("class"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("class"),
 								},
 							},
 						},
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchId,
-									Data:  NewSelectorData("id"),
+									Match: css.SelectorMatchId,
+									Data:  css.NewSelectorData("id"),
 								},
 							},
 						},
@@ -809,24 +810,24 @@ func Test_SelectorParser_ConsumePseudo_Is_Where(t *testing.T) {
 		{
 			name:  ":is() with complex selector",
 			input: ":is(div > .child)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoIs,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoIs,
 					PseudoName: "is",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Flag: SelectorFlagContainsComplexSelector,
-							Selectors: []*SimpleSelector{
+							Flag: css.SelectorFlagContainsComplexSelector,
+							Selectors: []*css.SimpleSelector{
 								{
-									Match:    SelectorMatchTag,
-									Data:     NewSelectorDataTag("", "div"),
-									Relation: SelectorRelationSubSelector,
+									Match:    css.SelectorMatchTag,
+									Data:     css.NewSelectorDataTag("", "div"),
+									Relation: css.SelectorRelationSubSelector,
 								},
 								{
-									Match:    SelectorMatchClass,
-									Data:     NewSelectorData("child"),
-									Relation: SelectorRelationChild,
+									Match:    css.SelectorMatchClass,
+									Data:     css.NewSelectorData("child"),
+									Relation: css.SelectorRelationChild,
 								},
 							},
 						},
@@ -865,8 +866,8 @@ func Test_SelectorParser_ConsumePseudo_Is_Where(t *testing.T) {
 				t.Errorf("Expected %+v, got %+v", tc.expected, result)
 			}
 
-			if !flags.Has(SelectorFlagContainsPseudo) {
-				t.Errorf("Expected SelectorFlagContainsPseudo to be set")
+			if !flags.Has(css.SelectorFlagContainsPseudo) {
+				t.Errorf("Expected css.SelectorFlagContainsPseudo to be set")
 			}
 		})
 	}
@@ -876,28 +877,28 @@ func Test_SelectorParser_ConsumePseudo_Has(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 		hasError bool
 	}{
 		{
 			name:  ":has() with descendant selector",
 			input: ":has(.child)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoHas,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoHas,
 					PseudoName: "has",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchPseudoClass,
-									Data:  NewSelectorDataPseudo("-internal-relative-anchor", SelectorPseudoRelativeAnchor),
+									Match: css.SelectorMatchPseudoClass,
+									Data:  css.NewSelectorDataPseudo("-internal-relative-anchor", css.SelectorPseudoRelativeAnchor),
 								},
 								{
-									Match:    SelectorMatchClass,
-									Data:     NewSelectorData("child"),
-									Relation: SelectorRelationRelativeDescendant,
+									Match:    css.SelectorMatchClass,
+									Data:     css.NewSelectorData("child"),
+									Relation: css.SelectorRelationRelativeDescendant,
 								},
 							},
 						},
@@ -908,22 +909,22 @@ func Test_SelectorParser_ConsumePseudo_Has(t *testing.T) {
 		{
 			name:  ":has() with child combinator",
 			input: ":has(> .child)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoHas,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoHas,
 					PseudoName: "has",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchPseudoClass,
-									Data:  NewSelectorDataPseudo("-internal-relative-anchor", SelectorPseudoRelativeAnchor),
+									Match: css.SelectorMatchPseudoClass,
+									Data:  css.NewSelectorDataPseudo("-internal-relative-anchor", css.SelectorPseudoRelativeAnchor),
 								},
 								{
-									Match:    SelectorMatchClass,
-									Data:     NewSelectorData("child"),
-									Relation: SelectorRelationRelativeChild,
+									Match:    css.SelectorMatchClass,
+									Data:     css.NewSelectorData("child"),
+									Relation: css.SelectorRelationRelativeChild,
 								},
 							},
 						},
@@ -934,22 +935,22 @@ func Test_SelectorParser_ConsumePseudo_Has(t *testing.T) {
 		{
 			name:  ":has() with adjacent sibling",
 			input: ":has(+ .sibling)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoHas,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoHas,
 					PseudoName: "has",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchPseudoClass,
-									Data:  NewSelectorDataPseudo("-internal-relative-anchor", SelectorPseudoRelativeAnchor),
+									Match: css.SelectorMatchPseudoClass,
+									Data:  css.NewSelectorDataPseudo("-internal-relative-anchor", css.SelectorPseudoRelativeAnchor),
 								},
 								{
-									Match:    SelectorMatchClass,
-									Data:     NewSelectorData("sibling"),
-									Relation: SelectorRelationRelativeDirectAdjacent,
+									Match:    css.SelectorMatchClass,
+									Data:     css.NewSelectorData("sibling"),
+									Relation: css.SelectorRelationRelativeDirectAdjacent,
 								},
 							},
 						},
@@ -984,11 +985,11 @@ func Test_SelectorParser_ConsumePseudo_Has(t *testing.T) {
 			}
 
 			// :has() should set both pseudo and complex selector flags
-			if !flags.Has(SelectorFlagContainsPseudo) {
-				t.Errorf("Expected SelectorFlagContainsPseudo to be set")
+			if !flags.Has(css.SelectorFlagContainsPseudo) {
+				t.Errorf("Expected css.SelectorFlagContainsPseudo to be set")
 			}
-			if !flags.Has(SelectorFlagContainsComplexSelector) {
-				t.Errorf("Expected SelectorFlagContainsComplexSelector to be set")
+			if !flags.Has(css.SelectorFlagContainsComplexSelector) {
+				t.Errorf("Expected css.SelectorFlagContainsComplexSelector to be set")
 			}
 		})
 	}
@@ -998,23 +999,23 @@ func Test_SelectorParser_ConsumePseudo_Not(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 		hasError bool
 	}{
 		{
 			name:  ":not() with single selector",
 			input: ":not(.class)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNot,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNot,
 					PseudoName: "not",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("class"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("class"),
 								},
 							},
 						},
@@ -1025,25 +1026,25 @@ func Test_SelectorParser_ConsumePseudo_Not(t *testing.T) {
 		{
 			name:  ":not() with multiple selectors",
 			input: ":not(.class, #id)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNot,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNot,
 					PseudoName: "not",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("class"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("class"),
 								},
 							},
 						},
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchId,
-									Data:  NewSelectorData("id"),
+									Match: css.SelectorMatchId,
+									Data:  css.NewSelectorData("id"),
 								},
 							},
 						},
@@ -1077,8 +1078,8 @@ func Test_SelectorParser_ConsumePseudo_Not(t *testing.T) {
 				t.Errorf("Expected %+v, got %+v", tc.expected, result)
 			}
 
-			if !flags.Has(SelectorFlagContainsPseudo) {
-				t.Errorf("Expected SelectorFlagContainsPseudo to be set")
+			if !flags.Has(css.SelectorFlagContainsPseudo) {
+				t.Errorf("Expected css.SelectorFlagContainsPseudo to be set")
 			}
 		})
 	}
@@ -1088,23 +1089,23 @@ func Test_SelectorParser_ConsumePseudo_Slotted(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 		hasError bool
 	}{
 		{
 			name:  "::slotted() with class selector",
 			input: "::slotted(.content)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoElement,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoSlotted,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoElement,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoSlotted,
 					PseudoName: "slotted",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("content"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("content"),
 								},
 							},
 						},
@@ -1115,17 +1116,17 @@ func Test_SelectorParser_ConsumePseudo_Slotted(t *testing.T) {
 		{
 			name:  "::slotted() with element selector",
 			input: "::slotted(div)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoElement,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoSlotted,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoElement,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoSlotted,
 					PseudoName: "slotted",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchTag,
-									Data:  NewSelectorDataTag("", "div"),
+									Match: css.SelectorMatchTag,
+									Data:  css.NewSelectorDataTag("", "div"),
 								},
 							},
 						},
@@ -1159,8 +1160,8 @@ func Test_SelectorParser_ConsumePseudo_Slotted(t *testing.T) {
 				t.Errorf("Expected %+v, got %+v", tc.expected, result)
 			}
 
-			if !flags.Has(SelectorFlagContainsPseudo) {
-				t.Errorf("Expected SelectorFlagContainsPseudo to be set")
+			if !flags.Has(css.SelectorFlagContainsPseudo) {
+				t.Errorf("Expected css.SelectorFlagContainsPseudo to be set")
 			}
 		})
 	}
@@ -1170,18 +1171,18 @@ func Test_SelectorParser_ConsumePseudo_NthChild(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 		hasError bool
 	}{
 		{
 			name:  ":nth-child(odd)",
 			input: ":nth-child(odd)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData: &SelectorPseudoNthData{
+					NthData: &css.SelectorPseudoNthData{
 						A: 2,
 						B: 1,
 					},
@@ -1191,80 +1192,80 @@ func Test_SelectorParser_ConsumePseudo_NthChild(t *testing.T) {
 		{
 			name:  ":nth-child(even)",
 			input: ":nth-child(even)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData:    NewSelectorPseudoNthData(2, 0),
+					NthData:    css.NewSelectorPseudoNthData(2, 0),
 				},
 			},
 		},
 		{
 			name:  ":nth-child(3)",
 			input: ":nth-child(3)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData:    NewSelectorPseudoNthData(0, 3),
+					NthData:    css.NewSelectorPseudoNthData(0, 3),
 				},
 			},
 		},
 		{
 			name:  ":nth-child(2n+1)",
 			input: ":nth-child(2n+1)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData:    NewSelectorPseudoNthData(2, 1),
+					NthData:    css.NewSelectorPseudoNthData(2, 1),
 				},
 			},
 		},
 		{
 			name:  ":nth-child(-2n+3)",
 			input: ":nth-child(-2n+3)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData:    NewSelectorPseudoNthData(-2, 3),
+					NthData:    css.NewSelectorPseudoNthData(-2, 3),
 				},
 			},
 		},
 		{
 			name:  ":nth-child(n)",
 			input: ":nth-child(n)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData:    NewSelectorPseudoNthData(1, 0),
+					NthData:    css.NewSelectorPseudoNthData(1, 0),
 				},
 			},
 		},
 		{
 			name:  ":nth-child(2n of .item)",
 			input: ":nth-child(2n of .item)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData: &SelectorPseudoNthData{
+					NthData: &css.SelectorPseudoNthData{
 						A: 2,
 						B: 0,
-						SelectorList: []*Selector{
+						SelectorList: []*css.Selector{
 							{
-								Selectors: []*SimpleSelector{
+								Selectors: []*css.SimpleSelector{
 									{
-										Match: SelectorMatchClass,
-										Data:  NewSelectorData("item"),
+										Match: css.SelectorMatchClass,
+										Data:  css.NewSelectorData("item"),
 									},
 								},
 							},
@@ -1299,8 +1300,8 @@ func Test_SelectorParser_ConsumePseudo_NthChild(t *testing.T) {
 				t.Errorf("Expected %+v, got %+v", tc.expected, result)
 			}
 
-			if !flags.Has(SelectorFlagContainsPseudo) {
-				t.Errorf("Expected SelectorFlagContainsPseudo to be set")
+			if !flags.Has(css.SelectorFlagContainsPseudo) {
+				t.Errorf("Expected css.SelectorFlagContainsPseudo to be set")
 			}
 		})
 	}
@@ -1310,16 +1311,16 @@ func Test_SelectorParser_ConsumePseudo_NestingParent(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 		hasError bool
 	}{
 		{
 			name:  "& nesting parent selector",
 			input: "&",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoParent,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoParent,
 					PseudoName: "parent",
 				},
 			},
@@ -1351,14 +1352,14 @@ func Test_SelectorParser_ConsumePseudo_NestingParent(t *testing.T) {
 			}
 
 			// Nesting parent should set all relevant flags
-			if !flags.Has(SelectorFlagContainsScopeOrParent) {
-				t.Errorf("Expected SelectorFlagContainsScopeOrParent to be set")
+			if !flags.Has(css.SelectorFlagContainsScopeOrParent) {
+				t.Errorf("Expected css.SelectorFlagContainsScopeOrParent to be set")
 			}
-			if !flags.Has(SelectorFlagContainsPseudo) {
-				t.Errorf("Expected SelectorFlagContainsPseudo to be set")
+			if !flags.Has(css.SelectorFlagContainsPseudo) {
+				t.Errorf("Expected css.SelectorFlagContainsPseudo to be set")
 			}
-			if !flags.Has(SelectorFlagContainsComplexSelector) {
-				t.Errorf("Expected SelectorFlagContainsComplexSelector to be set")
+			if !flags.Has(css.SelectorFlagContainsComplexSelector) {
+				t.Errorf("Expected css.SelectorFlagContainsComplexSelector to be set")
 			}
 		})
 	}
@@ -1368,23 +1369,23 @@ func Test_SelectorParser_ConsumePseudo_Host(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 		hasError bool
 	}{
 		{
 			name:  ":host() with class selector",
 			input: ":host(.active)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoHost,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoHost,
 					PseudoName: "host",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("active"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("active"),
 								},
 							},
 						},
@@ -1395,17 +1396,17 @@ func Test_SelectorParser_ConsumePseudo_Host(t *testing.T) {
 		{
 			name:  ":host-context() with complex selector",
 			input: ":host-context(.theme-dark)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoHostContext,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoHostContext,
 					PseudoName: "host-context",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("theme-dark"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("theme-dark"),
 								},
 							},
 						},
@@ -1444,8 +1445,8 @@ func Test_SelectorParser_ConsumePseudo_Host(t *testing.T) {
 				t.Errorf("Expected %+v, got %+v", tc.expected, result)
 			}
 
-			if !flags.Has(SelectorFlagContainsPseudo) {
-				t.Errorf("Expected SelectorFlagContainsPseudo to be set")
+			if !flags.Has(css.SelectorFlagContainsPseudo) {
+				t.Errorf("Expected css.SelectorFlagContainsPseudo to be set")
 			}
 		})
 	}
@@ -1644,7 +1645,7 @@ func Test_SelectorParser_ConsumePseudo_NthSelectors_All(t *testing.T) {
 	testcases := []struct {
 		name         string
 		input        string
-		expectedType SelectorPseudoType
+		expectedType css.SelectorPseudoType
 		expectedA    int
 		expectedB    int
 		hasError     bool
@@ -1652,41 +1653,41 @@ func Test_SelectorParser_ConsumePseudo_NthSelectors_All(t *testing.T) {
 		{
 			name:         ":nth-child with An+B",
 			input:        ":nth-child(2n+1)",
-			expectedType: SelectorPseudoNthChild,
+			expectedType: css.SelectorPseudoNthChild,
 			expectedA:    2,
 			expectedB:    1,
 		},
 		{
 			name:         ":nth-last-child with odd",
 			input:        ":nth-last-child(odd)",
-			expectedType: SelectorPseudoNthLastChild,
+			expectedType: css.SelectorPseudoNthLastChild,
 			expectedA:    2,
 			expectedB:    1,
 		},
 		{
 			name:         ":nth-of-type with number",
 			input:        ":nth-of-type(3)",
-			expectedType: SelectorPseudoNthOfType,
+			expectedType: css.SelectorPseudoNthOfType,
 			expectedA:    0,
 			expectedB:    3,
 		},
 		{
 			name:         ":nth-last-of-type with even",
 			input:        ":nth-last-of-type(even)",
-			expectedType: SelectorPseudoNthLastOfType,
+			expectedType: css.SelectorPseudoNthLastOfType,
 			expectedA:    2,
 			expectedB:    0,
 		},
 		{
 			name:         ":nth-of-type with 'of' should error",
 			input:        ":nth-of-type(2n of .item)",
-			expectedType: SelectorPseudoNthOfType,
+			expectedType: css.SelectorPseudoNthOfType,
 			hasError:     true,
 		},
 		{
 			name:         ":nth-last-of-type with 'of' should error",
 			input:        ":nth-last-of-type(n of div)",
-			expectedType: SelectorPseudoNthLastOfType,
+			expectedType: css.SelectorPseudoNthLastOfType,
 			hasError:     true,
 		},
 	}
@@ -1711,7 +1712,7 @@ func Test_SelectorParser_ConsumePseudo_NthSelectors_All(t *testing.T) {
 				return
 			}
 
-			pseudoData, ok := result.Data.(*SelectorDataPseudo)
+			pseudoData, ok := result.Data.(*css.SelectorDataPseudo)
 			if !ok {
 				t.Errorf("Expected SelectorDataPseudo, got %T", result.Data)
 				return
@@ -1741,26 +1742,26 @@ func Test_SelectorParser_ConsumePseudo_NthChild_WithOf(t *testing.T) {
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 		hasError bool
 	}{
 		{
 			name:  ":nth-child(2n of .item)",
 			input: ":nth-child(2n of .item)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData: &SelectorPseudoNthData{
+					NthData: &css.SelectorPseudoNthData{
 						A: 2,
 						B: 0,
-						SelectorList: []*Selector{
+						SelectorList: []*css.Selector{
 							{
-								Selectors: []*SimpleSelector{
+								Selectors: []*css.SimpleSelector{
 									{
-										Match: SelectorMatchClass,
-										Data:  NewSelectorData("item"),
+										Match: css.SelectorMatchClass,
+										Data:  css.NewSelectorData("item"),
 									},
 								},
 							},
@@ -1772,26 +1773,26 @@ func Test_SelectorParser_ConsumePseudo_NthChild_WithOf(t *testing.T) {
 		{
 			name:  ":nth-last-child(odd of div.container)",
 			input: ":nth-last-child(odd of div.container)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthLastChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthLastChild,
 					PseudoName: "nth-last-child",
-					NthData: &SelectorPseudoNthData{
+					NthData: &css.SelectorPseudoNthData{
 						A: 2,
 						B: 1,
-						SelectorList: []*Selector{
+						SelectorList: []*css.Selector{
 							{
-								Selectors: []*SimpleSelector{
+								Selectors: []*css.SimpleSelector{
 									{
-										Match:    SelectorMatchTag,
-										Data:     NewSelectorDataTag("", "div"),
-										Relation: SelectorRelationSubSelector,
+										Match:    css.SelectorMatchTag,
+										Data:     css.NewSelectorDataTag("", "div"),
+										Relation: css.SelectorRelationSubSelector,
 									},
 									{
-										Match:    SelectorMatchClass,
-										Data:     NewSelectorData("container"),
-										Relation: SelectorRelationSubSelector,
+										Match:    css.SelectorMatchClass,
+										Data:     css.NewSelectorData("container"),
+										Relation: css.SelectorRelationSubSelector,
 									},
 								},
 							},
@@ -1803,28 +1804,28 @@ func Test_SelectorParser_ConsumePseudo_NthChild_WithOf(t *testing.T) {
 		{
 			name:  ":nth-child(3 of .item, .other)",
 			input: ":nth-child(3 of .item, .other)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoNthChild,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoNthChild,
 					PseudoName: "nth-child",
-					NthData: &SelectorPseudoNthData{
+					NthData: &css.SelectorPseudoNthData{
 						A: 0,
 						B: 3,
-						SelectorList: []*Selector{
+						SelectorList: []*css.Selector{
 							{
-								Selectors: []*SimpleSelector{
+								Selectors: []*css.SimpleSelector{
 									{
-										Match: SelectorMatchClass,
-										Data:  NewSelectorData("item"),
+										Match: css.SelectorMatchClass,
+										Data:  css.NewSelectorData("item"),
 									},
 								},
 							},
 							{
-								Selectors: []*SimpleSelector{
+								Selectors: []*css.SimpleSelector{
 									{
-										Match: SelectorMatchClass,
-										Data:  NewSelectorData("other"),
+										Match: css.SelectorMatchClass,
+										Data:  css.NewSelectorData("other"),
 									},
 								},
 							},
@@ -1870,25 +1871,25 @@ func Test_SelectorParser_ConsumePseudo_NthChild_WithOf(t *testing.T) {
 // Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_IsWhere tests :is() and :where() functional pseudo-classes
 func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_IsWhere(t *testing.T) {
 	testcases := []struct {
-		name            string
-		input           string
-		expected        *SimpleSelector
-		expectError     bool
+		name        string
+		input       string
+		expected    *css.SimpleSelector
+		expectError bool
 	}{
 		{
 			name:  ":is with single selector",
 			input: ":is(.class)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoIs,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoIs,
 					PseudoName: "is",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("class"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("class"),
 								},
 							},
 						},
@@ -1899,25 +1900,25 @@ func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_IsWhere(t *testi
 		{
 			name:  ":is with multiple selectors",
 			input: ":is(.class, #id)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoIs,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoIs,
 					PseudoName: "is",
-					SelectorList: []*Selector{
+					SelectorList: []*css.Selector{
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchClass,
-									Data:  NewSelectorData("class"),
+									Match: css.SelectorMatchClass,
+									Data:  css.NewSelectorData("class"),
 								},
 							},
 						},
 						{
-							Selectors: []*SimpleSelector{
+							Selectors: []*css.SimpleSelector{
 								{
-									Match: SelectorMatchId,
-									Data:  NewSelectorData("id"),
+									Match: css.SelectorMatchId,
+									Data:  css.NewSelectorData("id"),
 								},
 							},
 						},
@@ -1976,15 +1977,15 @@ func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_LangAndDir(t *te
 	testcases := []struct {
 		name     string
 		input    string
-		expected *SimpleSelector
+		expected *css.SimpleSelector
 	}{
 		{
 			name:  ":lang with single language",
 			input: ":lang(en)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType:   SelectorPseudoLang,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType:   css.SelectorPseudoLang,
 					PseudoName:   "lang",
 					ArgumentList: []string{"en"},
 				},
@@ -1993,10 +1994,10 @@ func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_LangAndDir(t *te
 		{
 			name:  ":lang with multiple languages",
 			input: ":lang(en, fr, de)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType:   SelectorPseudoLang,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType:   css.SelectorPseudoLang,
 					PseudoName:   "lang",
 					ArgumentList: []string{"en", "fr", "de"},
 				},
@@ -2005,10 +2006,10 @@ func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_LangAndDir(t *te
 		{
 			name:  ":dir with ltr",
 			input: ":dir(ltr)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoClass,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoDir,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoClass,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoDir,
 					PseudoName: "dir",
 					Argument:   "ltr",
 				},
@@ -2048,16 +2049,16 @@ func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_Part(t *testing.
 	testcases := []struct {
 		name        string
 		input       string
-		expected    *SimpleSelector
+		expected    *css.SimpleSelector
 		expectError bool
 	}{
 		{
 			name:  "::part with single identifier",
 			input: "::part(button)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoElement,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoPart,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoElement,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoPart,
 					PseudoName: "part",
 					IdentList:  []string{"button"},
 				},
@@ -2066,10 +2067,10 @@ func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_Part(t *testing.
 		{
 			name:  "::part with multiple identifiers",
 			input: "::part(button primary)",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoElement,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoPart,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoElement,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoPart,
 					PseudoName: "part",
 					IdentList:  []string{"button", "primary"},
 				},
@@ -2119,17 +2120,17 @@ func Test_SelectorParser_ConsumeSimpleSelector_FunctionalPseudo_Part(t *testing.
 // Test_SelectorParser_ConsumeSimpleSelector_PseudoElementValidation_WebKitSpecific tests WebKit-specific pseudo-elements
 func Test_SelectorParser_ConsumeSimpleSelector_PseudoElementValidation_WebKitSpecific(t *testing.T) {
 	testcases := []struct {
-		name         string
-		input        string
-		expected     *SimpleSelector
+		name     string
+		input    string
+		expected *css.SimpleSelector
 	}{
 		{
 			name:  "::-webkit-scrollbar",
 			input: "::-webkit-scrollbar",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoElement,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoScrollbar,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoElement,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoScrollbar,
 					PseudoName: "-webkit-scrollbar",
 				},
 			},
@@ -2137,10 +2138,10 @@ func Test_SelectorParser_ConsumeSimpleSelector_PseudoElementValidation_WebKitSpe
 		{
 			name:  "::-webkit-file-upload-button",
 			input: "::-webkit-file-upload-button",
-			expected: &SimpleSelector{
-				Match: SelectorMatchPseudoElement,
-				Data: &SelectorDataPseudo{
-					PseudoType: SelectorPseudoFileSelectorButton,
+			expected: &css.SimpleSelector{
+				Match: css.SelectorMatchPseudoElement,
+				Data: &css.SelectorDataPseudo{
+					PseudoType: css.SelectorPseudoFileSelectorButton,
 					PseudoName: "-webkit-file-upload-button",
 				},
 			},
@@ -2185,7 +2186,7 @@ func Test_SelectorParser_ConsumeSimpleSelector_ANPlusB_ValidCases(t *testing.T) 
 		// Keywords
 		{"odd keyword", "odd", 2, 1},
 		{"even keyword", "even", 2, 0},
-		
+
 		// Simple numbers (B only)
 		{"simple number 0", "0", 0, 0},
 		{"simple number 8", "8", 0, 8},
@@ -2196,11 +2197,11 @@ func Test_SelectorParser_ConsumeSimpleSelector_ANPlusB_ValidCases(t *testing.T) 
 		{"just n", "n", 1, 0},
 		{"positive n", "+n", 1, 0},
 		{"negative n", "-n", -1, 0},
-		
+
 		// An+B with positive/negative B
 		{"n with negative B", "n-18", 1, -18},
 		{"coefficient with B", "10n+5", 10, 5},
-		
+
 		// An+B with spaces
 		{"with spaces positive", "29n + 77", 29, 77},
 		{"with spaces negative", "29n - 77", 29, -77},

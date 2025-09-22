@@ -1,10 +1,87 @@
-package selector
+package css
 
 import (
 	"strings"
-
-	"go.baoshuo.dev/cssutil"
 )
+
+// ===== SelectorListFlagType =====
+
+type SelectorListFlagType int
+
+const (
+	SelectorFlagContainsPseudo SelectorListFlagType = 1 << iota
+	SelectorFlagContainsComplexSelector
+	SelectorFlagContainsScopeOrParent
+)
+
+func (s SelectorListFlagType) Has(flag SelectorListFlagType) bool {
+	return s&flag != 0
+}
+
+func (s *SelectorListFlagType) Set(flag SelectorListFlagType) {
+	*s |= flag
+}
+
+// ===== Selector =====
+
+// Selector represents a list of simple selectors that can be combined
+// to form a complex selector.
+//
+// It can contain multiple simple selectors and may include combinators
+// to define relationships between them.
+//
+// It also has flags to indicate certain properties of the selector.
+//
+// The selectors are stored in the order they appear in the CSS.
+type Selector struct {
+	Flag      SelectorListFlagType // Flags for the selector
+	Selectors []*SimpleSelector    // The list of selectors in this selector list
+}
+
+func (s *Selector) Append(sel ...*SimpleSelector) {
+	if len(sel) == 0 {
+		return
+	}
+	s.Selectors = append(s.Selectors, sel...)
+}
+
+func (s *Selector) InsertBefore(index int, sel *SimpleSelector) {
+	if sel == nil || index < 0 || index > len(s.Selectors) {
+		return
+	}
+	s.Selectors = append(s.Selectors[:index], append([]*SimpleSelector{sel}, s.Selectors[index:]...)...)
+}
+
+func (s *Selector) Prepend(sel *SimpleSelector) {
+	if sel == nil {
+		return
+	}
+	s.Selectors = append([]*SimpleSelector{sel}, s.Selectors...)
+}
+
+func (s *Selector) String() string {
+	var result strings.Builder
+
+	for _, sel := range s.Selectors {
+		result.WriteString(sel.String())
+	}
+
+	return result.String()
+}
+
+func (s *Selector) Equals(other *Selector) bool {
+	if s.Flag != other.Flag || len(s.Selectors) != len(other.Selectors) {
+		return false
+	}
+
+	for i, sel := range s.Selectors {
+		if !sel.Equals(other.Selectors[i]) {
+			return false
+		}
+	}
+
+	return true
+}
 
 // ===== SimpleSelector =====
 
@@ -134,91 +211,4 @@ func (sr SelectorRelationType) String() string {
 	default:
 		return ""
 	}
-}
-
-// ===== SelectorDataType =====
-
-type SelectorDataType interface {
-	String(match SelectorMatchType) string
-	Equals(other SelectorDataType) bool
-}
-
-// ===== SelectorData =====
-
-type SelectorData struct {
-	Value string // The value of the selector, e.g., tag name, class name, id, etc.
-}
-
-func NewSelectorData(value string) *SelectorData {
-	return &SelectorData{Value: value}
-}
-
-func (d *SelectorData) String(match SelectorMatchType) string {
-	switch match {
-	case SelectorMatchId:
-		return "#" + cssutil.SerializeIdentifier(d.Value)
-	case SelectorMatchClass:
-		return "." + cssutil.SerializeIdentifier(d.Value)
-	case SelectorMatchPseudoClass:
-		return ":" + cssutil.SerializeIdentifier(d.Value)
-	case SelectorMatchPseudoElement:
-		return "::" + cssutil.SerializeIdentifier(d.Value)
-	case SelectorMatchPagePseudoClass:
-		return "@page :" + cssutil.SerializeIdentifier(d.Value)
-	case SelectorMatchTag:
-		return cssutil.SerializeIdentifier(d.Value)
-	case SelectorMatchUniversalTag:
-		if d.Value != "" {
-			return cssutil.SerializeIdentifier(d.Value) + "|*"
-		} else {
-			return "*"
-		}
-	default:
-		return cssutil.SerializeIdentifier(d.Value)
-	}
-}
-
-func (d *SelectorData) Equals(other SelectorDataType) bool {
-	otherData, ok := other.(*SelectorData)
-	if !ok {
-		return false
-	}
-	return d.Value == otherData.Value
-}
-
-// ===== SelectorDataTag =====
-
-type SelectorDataTag struct {
-	Namespace string // The namespace of the tag, if any.
-	TagName   string // The tag name.
-}
-
-func NewSelectorDataTag(namespace, tagName string) *SelectorDataTag {
-	return &SelectorDataTag{
-		Namespace: namespace,
-		TagName:   tagName,
-	}
-}
-
-func (d *SelectorDataTag) String(match SelectorMatchType) string {
-	var tagName string
-	if match == SelectorMatchUniversalTag {
-		tagName = "*"
-	} else {
-		tagName = cssutil.SerializeIdentifier(d.TagName)
-	}
-
-	if d.Namespace != "" {
-		return cssutil.SerializeIdentifier(d.Namespace) + "|" + tagName
-	} else {
-		return tagName
-	}
-}
-
-func (d *SelectorDataTag) Equals(other SelectorDataType) bool {
-	otherData, ok := other.(*SelectorDataTag)
-	if !ok {
-		return false
-	}
-	return d.Namespace == otherData.Namespace && d.TagName == otherData.TagName
 }

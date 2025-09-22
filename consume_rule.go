@@ -34,12 +34,14 @@ loop:
 		case csslexer.EOFToken:
 			break loop
 
-		case csslexer.WhitespaceToken, csslexer.CommentToken:
-			// Ignore whitespace and comments
+		case csslexer.WhitespaceToken:
+			// Ignore whitespace
+			p.s.Consume()
 			continue
 
 		case csslexer.CDCToken, csslexer.CDOToken:
 			// TODO: Handle CDCToken and CDOToken if needed, now we just ignore them
+			p.s.Consume()
 			continue
 
 		case csslexer.AtKeywordToken:

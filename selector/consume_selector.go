@@ -5,13 +5,14 @@ import (
 
 	"go.baoshuo.dev/csslexer"
 
+	"go.baoshuo.dev/cssparser/css"
 	"go.baoshuo.dev/cssparser/nesting"
 )
 
 func (sp *SelectorParser) consumeComplexSelector(
 	nestingType nesting.NestingTypeType,
 	firstInComplexSelector bool,
-) (*Selector, error) {
+) (*css.Selector, error) {
 	if nestingType != nesting.NestingTypeNone && sp.peekIsCombinator() {
 		// Nested selectors that start with a combinator are to be
 		// interpreted as relative selectors (with the anchor being
@@ -19,7 +20,7 @@ func (sp *SelectorParser) consumeComplexSelector(
 		return sp.consumeNestedRelativeSelector(nestingType)
 	}
 
-	sel := &Selector{}
+	sel := &css.Selector{}
 
 	compoundSelectors, firstFlags := sp.consumeCompoundSelector(nestingType)
 	if len(compoundSelectors) == 0 {
@@ -28,13 +29,13 @@ func (sp *SelectorParser) consumeComplexSelector(
 	sel.Flag.Set(firstFlags)
 	sel.Append(compoundSelectors...)
 
-	if combinator := sp.consumeCombinator(); combinator != SelectorRelationSubSelector {
+	if combinator := sp.consumeCombinator(); combinator != css.SelectorRelationSubSelector {
 		rest, restFlags, err := sp.consumePartialComplexSelector(nestingType, combinator)
 		if err != nil {
 			return nil, err
 		}
 
-		sel.Flag.Set(SelectorFlagContainsComplexSelector)
+		sel.Flag.Set(css.SelectorFlagContainsComplexSelector)
 		sel.Flag.Set(restFlags)
 		sel.Append(rest...)
 	}
@@ -48,15 +49,15 @@ func (sp *SelectorParser) consumeComplexSelector(
 
 func (sp *SelectorParser) consumePartialComplexSelector(
 	nestingType nesting.NestingTypeType,
-	combinator SelectorRelationType,
-) ([]*SimpleSelector, SelectorListFlagType, error) {
-	var flags SelectorListFlagType
-	selectors := make([]*SimpleSelector, 0)
+	combinator css.SelectorRelationType,
+) ([]*css.SimpleSelector, css.SelectorListFlagType, error) {
+	var flags css.SelectorListFlagType
+	selectors := make([]*css.SimpleSelector, 0)
 
 	for {
 		compound, compoundFlags := sp.consumeCompoundSelector(nestingType)
 		if len(compound) == 0 {
-			if combinator == SelectorRelationDescendant {
+			if combinator == css.SelectorRelationDescendant {
 				flags.Set(compoundFlags)
 				break
 			} else {
@@ -69,7 +70,7 @@ func (sp *SelectorParser) consumePartialComplexSelector(
 		selectors = append(selectors, compound...)
 
 		combinator = sp.consumeCombinator()
-		if combinator == SelectorRelationSubSelector {
+		if combinator == css.SelectorRelationSubSelector {
 			break
 		}
 	}
@@ -77,9 +78,9 @@ func (sp *SelectorParser) consumePartialComplexSelector(
 	return selectors, flags, nil
 }
 
-func (sp *SelectorParser) consumeCompoundSelector(nestingType nesting.NestingTypeType) ([]*SimpleSelector, SelectorListFlagType) {
-	var selectors []*SimpleSelector
-	var flags SelectorListFlagType
+func (sp *SelectorParser) consumeCompoundSelector(nestingType nesting.NestingTypeType) ([]*css.SimpleSelector, css.SelectorListFlagType) {
+	var selectors []*css.SimpleSelector
+	var flags css.SelectorListFlagType
 
 	// See if the compound selector starts with a tag name, universal selector
 	// or the likes (these can only be at the beginning). Note that we don't
@@ -99,7 +100,7 @@ func (sp *SelectorParser) consumeCompoundSelector(nestingType nesting.NestingTyp
 
 		// TODO: handle pseudo-elements
 
-		selector.Relation = SelectorRelationSubSelector
+		selector.Relation = css.SelectorRelationSubSelector
 		flags.Set(selectorFlags)
 		selectors = append(selectors, selector)
 	}
@@ -183,15 +184,15 @@ func (sp *SelectorParser) consumeName() (string, string, bool) {
 	return name, namespace, true
 }
 
-func (sp *SelectorParser) consumeNestedRelativeSelector(nestingType nesting.NestingTypeType) (*Selector, error) {
+func (sp *SelectorParser) consumeNestedRelativeSelector(nestingType nesting.NestingTypeType) (*css.Selector, error) {
 	return nil, errors.New("not implemented: SelectorParser.consumeNestedRelativeSelector")
 }
 
-func (sp *SelectorParser) consumeCombinator() SelectorRelationType {
-	fallbackResult := SelectorRelationSubSelector
+func (sp *SelectorParser) consumeCombinator() css.SelectorRelationType {
+	fallbackResult := css.SelectorRelationSubSelector
 	for sp.tokenStream.Peek().Type == csslexer.WhitespaceToken {
 		sp.tokenStream.Consume()
-		fallbackResult = SelectorRelationDescendant
+		fallbackResult = css.SelectorRelationDescendant
 	}
 
 	nextToken := sp.tokenStream.Peek()
@@ -201,13 +202,13 @@ func (sp *SelectorParser) consumeCombinator() SelectorRelationType {
 	switch nextToken.Value {
 	case ">":
 		sp.tokenStream.ConsumeIncludingWhitespace()
-		return SelectorRelationChild
+		return css.SelectorRelationChild
 	case "+":
 		sp.tokenStream.ConsumeIncludingWhitespace()
-		return SelectorRelationDirectAdjacent
+		return css.SelectorRelationDirectAdjacent
 	case "~":
 		sp.tokenStream.ConsumeIncludingWhitespace()
-		return SelectorRelationIndirectAdjacent
+		return css.SelectorRelationIndirectAdjacent
 	default:
 		return fallbackResult // Invalid combinator, return fallback
 	}

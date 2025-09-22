@@ -1,4 +1,4 @@
-package selector
+package css
 
 import (
 	"go.baoshuo.dev/cssutil"
@@ -51,7 +51,8 @@ func (d *SelectorDataAttr) Equals(other SelectorDataType) bool {
 		return false
 	}
 
-	return d.AttrName == otherData.AttrName &&
+	return d.AttrNamespace == otherData.AttrNamespace &&
+		d.AttrName == otherData.AttrName &&
 		d.AttrValue == otherData.AttrValue &&
 		d.AttrMatch == otherData.AttrMatch
 }

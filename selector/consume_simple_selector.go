@@ -8,12 +8,13 @@ import (
 
 	"go.baoshuo.dev/csslexer"
 
+	"go.baoshuo.dev/cssparser/css"
 	"go.baoshuo.dev/cssparser/nesting"
 	"go.baoshuo.dev/cssparser/token_stream"
 )
 
 // ConsumeSimpleSelector consumes a simple selector from the token stream.
-func (sp *SelectorParser) consumeSimpleSelector() (*SimpleSelector, SelectorListFlagType, error) {
+func (sp *SelectorParser) consumeSimpleSelector() (*css.SimpleSelector, css.SelectorListFlagType, error) {
 	token := sp.tokenStream.Peek()
 	switch token.Type {
 	case csslexer.HashToken:
@@ -40,7 +41,7 @@ func (sp *SelectorParser) consumeSimpleSelector() (*SimpleSelector, SelectorList
 		if err != nil {
 			return nil, 0, err
 		}
-		flags.Set(SelectorFlagContainsPseudo)
+		flags.Set(css.SelectorFlagContainsPseudo)
 		return ss, flags, nil
 
 	default:
@@ -54,11 +55,11 @@ func (sp *SelectorParser) consumeSimpleSelector() (*SimpleSelector, SelectorList
 // before calling this method.
 //
 // Returns a SimpleSelector representing the ID selector.
-func (sp *SelectorParser) consumeId() (*SimpleSelector, error) {
+func (sp *SelectorParser) consumeId() (*css.SimpleSelector, error) {
 	token := sp.tokenStream.Consume() // Consume the hash token
-	return &SimpleSelector{
-		Match: SelectorMatchId,
-		Data:  NewSelectorData(token.Value),
+	return &css.SimpleSelector{
+		Match: css.SelectorMatchId,
+		Data:  css.NewSelectorData(token.Value),
 	}, nil
 }
 
@@ -70,16 +71,16 @@ func (sp *SelectorParser) consumeId() (*SimpleSelector, error) {
 // Returns a SimpleSelector representing the class selector.
 //
 // If the next token is not an identifier, it returns an error.
-func (sp *SelectorParser) consumeClass() (*SimpleSelector, error) {
+func (sp *SelectorParser) consumeClass() (*css.SimpleSelector, error) {
 	sp.tokenStream.Consume() // Consume the delimiter token ('.')
 	token := sp.tokenStream.Peek()
 	if token.Type != csslexer.IdentToken {
 		return nil, errors.New("invalid selector: expected class name after '.'")
 	}
 	sp.tokenStream.Consume() // Consume the class name token
-	return &SimpleSelector{
-		Match: SelectorMatchClass,
-		Data:  NewSelectorData(token.Value),
+	return &css.SimpleSelector{
+		Match: css.SelectorMatchClass,
+		Data:  css.NewSelectorData(token.Value),
 	}, nil
 }
 
@@ -92,8 +93,8 @@ func (sp *SelectorParser) consumeClass() (*SimpleSelector, error) {
 //
 // If the tokens cannot be consumed correctly, it returns an error, and skip
 // to the token after right bracket token.
-func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
-	var sel *SimpleSelector
+func (sp *SelectorParser) consumeAttribute() (*css.SimpleSelector, error) {
+	var sel *css.SimpleSelector
 
 	err := sp.tokenStream.ConsumeBlock(func(_ *token_stream.TokenStream) error {
 		// consume the whitespace before the attribute selector
@@ -117,16 +118,16 @@ func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
 		}
 
 		if sp.tokenStream.AtEnd() {
-			sel = &SimpleSelector{
-				Match: SelectorMatchAttributeSet,
-				Data:  NewSelectorDataAttr(nameStr, "", SelectorAttrMatchCaseSensitive),
+			sel = &css.SimpleSelector{
+				Match: css.SelectorMatchAttributeSet,
+				Data:  css.NewSelectorDataAttr(nameStr, "", css.SelectorAttrMatchCaseSensitive),
 			}
 
 			return nil
 		}
 
 		matchType := sp.consumeAttributeMatch()
-		if matchType == SelectorMatchUnknown {
+		if matchType == css.SelectorMatchUnknown {
 			return errors.New("invalid attribute selector: unknown match type")
 		}
 
@@ -142,9 +143,9 @@ func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
 			return errors.New("invalid attribute selector: unexpected tokens after value")
 		}
 
-		sel = &SimpleSelector{
+		sel = &css.SimpleSelector{
 			Match: matchType,
-			Data:  NewSelectorDataAttr(nameStr, valueToken.Value, attrMatchType),
+			Data:  css.NewSelectorDataAttr(nameStr, valueToken.Value, attrMatchType),
 		}
 		return nil
 	})
@@ -155,62 +156,62 @@ func (sp *SelectorParser) consumeAttribute() (*SimpleSelector, error) {
 }
 
 // consumeAttributeMatch consumes the attribute match type from the token stream.
-func (sp *SelectorParser) consumeAttributeMatch() SelectorMatchType {
+func (sp *SelectorParser) consumeAttributeMatch() css.SelectorMatchType {
 	token := sp.tokenStream.Peek()
 	switch token.Type {
 	case csslexer.IncludeMatchToken:
 		sp.tokenStream.ConsumeIncludingWhitespace()
-		return SelectorMatchAttributeList
+		return css.SelectorMatchAttributeList
 
 	case csslexer.DashMatchToken:
 		sp.tokenStream.ConsumeIncludingWhitespace()
-		return SelectorMatchAttributeHyphen
+		return css.SelectorMatchAttributeHyphen
 
 	case csslexer.PrefixMatchToken:
 		sp.tokenStream.ConsumeIncludingWhitespace()
-		return SelectorMatchAttributeBegin
+		return css.SelectorMatchAttributeBegin
 
 	case csslexer.SuffixMatchToken:
 		sp.tokenStream.ConsumeIncludingWhitespace()
-		return SelectorMatchAttributeEnd
+		return css.SelectorMatchAttributeEnd
 
 	case csslexer.SubstringMatchToken:
 		sp.tokenStream.ConsumeIncludingWhitespace()
-		return SelectorMatchAttributeContain
+		return css.SelectorMatchAttributeContain
 
 	case csslexer.DelimiterToken:
 		if token.Value == "=" {
 			sp.tokenStream.ConsumeIncludingWhitespace()
-			return SelectorMatchAttributeExact
+			return css.SelectorMatchAttributeExact
 		}
 
-		return SelectorMatchUnknown // Invalid attribute match type
+		return css.SelectorMatchUnknown // Invalid attribute match type
 
 	default:
-		return SelectorMatchUnknown
+		return css.SelectorMatchUnknown
 	}
 }
 
 // consumeAttributeFlags consumes the attribute flags from the token stream.
-func (sp *SelectorParser) consumeAttributeFlags() SelectorAttrMatchType {
+func (sp *SelectorParser) consumeAttributeFlags() css.SelectorAttrMatchType {
 	if sp.tokenStream.Peek().Type != csslexer.IdentToken {
-		return SelectorAttrMatchCaseSensitive // Default to case-sensitive if no flags are specified
+		return css.SelectorAttrMatchCaseSensitive // Default to case-sensitive if no flags are specified
 	}
 
 	token := sp.tokenStream.ConsumeIncludingWhitespace() // Consume the identifier token
 
 	if strings.ToLower(token.Value) == "i" {
-		return SelectorAttrMatchCaseInsensitive
+		return css.SelectorAttrMatchCaseInsensitive
 	} else if strings.ToLower(token.Value) == "s" {
-		return SelectorAttrMatchCaseSensitiveAlways
+		return css.SelectorAttrMatchCaseSensitiveAlways
 	} else {
-		return SelectorAttrMatchCaseSensitive // Default to case-sensitive if unknown flag
+		return css.SelectorAttrMatchCaseSensitive // Default to case-sensitive if unknown flag
 	}
 }
 
 // consumePseudo consumes a pseudo-class or pseudo-element selector from
 // the token stream.
-func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType, error) {
+func (sp *SelectorParser) consumePseudo() (*css.SimpleSelector, css.SelectorListFlagType, error) {
 	sp.tokenStream.Consume() // Consume the colon token
 
 	colons := 1
@@ -224,17 +225,17 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 		return nil, 0, errors.New("invalid pseudo selector: expected ident-token or function-token after colon")
 	}
 
-	var flags SelectorListFlagType
-	sel := &SimpleSelector{}
+	var flags css.SelectorListFlagType
+	sel := &css.SimpleSelector{}
 
 	switch colons {
 	case 1:
 		// Pseudo-class
-		sel.Match = SelectorMatchPseudoClass
+		sel.Match = css.SelectorMatchPseudoClass
 
 	case 2:
 		// Pseudo-element
-		sel.Match = SelectorMatchPseudoElement
+		sel.Match = css.SelectorMatchPseudoElement
 
 	default:
 		return nil, 0, errors.New("invalid pseudo selector: too many colons")
@@ -242,23 +243,23 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 
 	pseudoName := strings.ToLower(token.Value)
 	pseudoType := parsePseudoType(pseudoName, token.Type == csslexer.FunctionToken)
-	sel.Data = NewSelectorDataPseudo(pseudoName, pseudoType)
+	sel.Data = css.NewSelectorDataPseudo(pseudoName, pseudoType)
 
-	if sel.Match == SelectorMatchPseudoElement {
+	if sel.Match == css.SelectorMatchPseudoElement {
 		// TODO: check if current state disallows pseudo element selectors
 	}
 
 	if token.Type == csslexer.IdentToken {
 		sp.tokenStream.Consume() // Consume the ident token
 
-		pseudoData := sel.Data.(*SelectorDataPseudo)
+		pseudoData := sel.Data.(*css.SelectorDataPseudo)
 		switch pseudoData.PseudoType {
-		case SelectorPseudoUnknown:
+		case css.SelectorPseudoUnknown:
 			return nil, 0, errors.New("invalid pseudo selector: unknown pseudo type")
-		case SelectorPseudoHost:
+		case css.SelectorPseudoHost:
 			// TODO: found_host_in_compound_ = true;
-		case SelectorPseudoScope:
-			flags.Set(SelectorFlagContainsScopeOrParent)
+		case css.SelectorPseudoScope:
+			flags.Set(css.SelectorFlagContainsScopeOrParent)
 		}
 
 		return sel, flags, nil
@@ -269,10 +270,10 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 	err := sp.tokenStream.ConsumeBlockToEnd(csslexer.RightParenthesisToken, func(ts *token_stream.TokenStream) error {
 		ts.ConsumeWhitespace() // Consume any whitespace before the function arguments
 
-		pseudoData := sel.Data.(*SelectorDataPseudo)
+		pseudoData := sel.Data.(*css.SelectorDataPseudo)
 		switch pseudoData.PseudoType {
-		case SelectorPseudoIs,
-			SelectorPseudoWhere:
+		case css.SelectorPseudoIs,
+			css.SelectorPseudoWhere:
 			// :is() and :where() use forgiving nested selector lists
 			selectorList, err := sp.consumeForgivingNestedSelectorList()
 			if err != nil {
@@ -284,13 +285,13 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			pseudoData.SelectorList = selectorList
 			return nil
 
-		case SelectorPseudoHost,
-			SelectorPseudoHostContext:
+		case css.SelectorPseudoHost,
+			css.SelectorPseudoHostContext:
 			// found_host_in_compound_ = true
 			fallthrough
 
-		case SelectorPseudoAny,
-			SelectorPseudoCue:
+		case css.SelectorPseudoAny,
+			css.SelectorPseudoCue:
 			// :any() and :cue() use compound selector lists
 			selectorList, err := sp.consumeCompoundSelectorList()
 			if err != nil || !ts.AtEnd() {
@@ -298,28 +299,28 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			}
 			if len(selectorList) > 1 {
 				// :host() can only have single complex selectors
-				if pseudoData.PseudoType == SelectorPseudoHost {
+				if pseudoData.PseudoType == css.SelectorPseudoHost {
 					return errors.New("invalid pseudo selector: :host() can only contain single complex selector")
 				}
-				if pseudoData.PseudoType == SelectorPseudoHostContext {
+				if pseudoData.PseudoType == css.SelectorPseudoHostContext {
 					return errors.New("invalid pseudo selector: :host-context() can only contain single complex selector")
 				}
 			}
 			pseudoData.SelectorList = selectorList
 			return nil
 
-		case SelectorPseudoHas:
+		case css.SelectorPseudoHas:
 			// :has() uses relative selector lists
 			selectorList, err := sp.consumeRelativeSelectorList()
 			if err != nil || !ts.AtEnd() {
 				return errors.New("invalid pseudo selector: failed to parse relative selector list for :has()")
 			}
 			pseudoData.SelectorList = selectorList
-			flags.Set(SelectorFlagContainsPseudo)
-			flags.Set(SelectorFlagContainsComplexSelector)
+			flags.Set(css.SelectorFlagContainsPseudo)
+			flags.Set(css.SelectorFlagContainsComplexSelector)
 			return nil
 
-		case SelectorPseudoNot:
+		case css.SelectorPseudoNot:
 			// :not() uses nested selector lists
 			selectorList, err := sp.consumeNestedSelectorList()
 			if err != nil || !ts.AtEnd() {
@@ -328,9 +329,9 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			pseudoData.SelectorList = selectorList
 			return nil
 
-		case SelectorPseudoPicker,
-			SelectorPseudoDir,
-			SelectorPseudoState:
+		case css.SelectorPseudoPicker,
+			css.SelectorPseudoDir,
+			css.SelectorPseudoState:
 			// These pseudo-classes take a simple identifier argument
 			token := ts.Peek()
 			if token.Type != csslexer.IdentToken {
@@ -343,7 +344,7 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			}
 			return nil
 
-		case SelectorPseudoPart:
+		case css.SelectorPseudoPart:
 			// ::part() takes a space-separated list of identifiers
 			var parts []string
 			for !ts.AtEnd() {
@@ -360,7 +361,7 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			pseudoData.IdentList = parts
 			return nil
 
-		case SelectorPseudoActiveViewTransitionType:
+		case css.SelectorPseudoActiveViewTransitionType:
 			// :active-view-transition-type() takes a comma-separated list of identifiers
 			var types []string
 			for {
@@ -387,11 +388,11 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			pseudoData.IdentList = types
 			return nil
 
-		case SelectorPseudoViewTransitionGroup,
-			SelectorPseudoViewTransitionGroupChildren,
-			SelectorPseudoViewTransitionImagePair,
-			SelectorPseudoViewTransitionOld,
-			SelectorPseudoViewTransitionNew:
+		case css.SelectorPseudoViewTransitionGroup,
+			css.SelectorPseudoViewTransitionGroupChildren,
+			css.SelectorPseudoViewTransitionImagePair,
+			css.SelectorPseudoViewTransitionOld,
+			css.SelectorPseudoViewTransitionNew:
 			// These pseudo-elements take a name and optional classes
 			var nameAndClasses []string
 
@@ -435,17 +436,17 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			pseudoData.IdentList = nameAndClasses
 			return nil
 
-		case SelectorPseudoSlotted:
+		case css.SelectorPseudoSlotted:
 			// ::slotted() takes a single compound selector
 			sel, err := sp.consumeCompoundSelectorAsComplexSelector()
 			ts.ConsumeWhitespace()
 			if err != nil || !ts.AtEnd() {
 				return errors.New("invalid pseudo selector: failed to parse compound selector for ::slotted()")
 			}
-			pseudoData.SelectorList = []*Selector{sel}
+			pseudoData.SelectorList = []*css.Selector{sel}
 			return nil
 
-		case SelectorPseudoLang:
+		case css.SelectorPseudoLang:
 			// :lang() supports extended language ranges
 			var langs []string
 
@@ -532,10 +533,10 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			pseudoData.ArgumentList = langs
 			return nil
 
-		case SelectorPseudoNthChild,
-			SelectorPseudoNthLastChild,
-			SelectorPseudoNthOfType,
-			SelectorPseudoNthLastOfType:
+		case css.SelectorPseudoNthChild,
+			css.SelectorPseudoNthLastChild,
+			css.SelectorPseudoNthOfType,
+			css.SelectorPseudoNthLastOfType:
 			// Parse An+B notation
 			a, b, err := sp.consumeANPlusB()
 			if err != nil {
@@ -543,7 +544,7 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			}
 			ts.ConsumeWhitespace()
 
-			nthData := NewSelectorPseudoNthData(a, b)
+			nthData := css.NewSelectorPseudoNthData(a, b)
 
 			if ts.AtEnd() {
 				// Simple An+B case
@@ -552,8 +553,8 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			}
 
 			// Check for "of <selectors>" syntax (only for :nth-child and :nth-last-child)
-			if pseudoData.PseudoType != SelectorPseudoNthChild &&
-				pseudoData.PseudoType != SelectorPseudoNthLastChild {
+			if pseudoData.PseudoType != css.SelectorPseudoNthChild &&
+				pseudoData.PseudoType != css.SelectorPseudoNthLastChild {
 				return errors.New("invalid pseudo selector: unexpected tokens after An+B")
 			}
 
@@ -570,7 +571,7 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			pseudoData.NthData = nthData
 			return nil
 
-		case SelectorPseudoScrollButton:
+		case css.SelectorPseudoScrollButton:
 			// ::scroll-button() takes a direction keyword or *
 			token := ts.Peek()
 			if token.Type == csslexer.IdentToken {
@@ -592,7 +593,7 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 			}
 			return nil
 
-		case SelectorPseudoHighlight:
+		case css.SelectorPseudoHighlight:
 			// ::highlight() takes a simple identifier argument
 			token := ts.Peek()
 			if token.Type != csslexer.IdentToken {
@@ -615,17 +616,17 @@ func (sp *SelectorParser) consumePseudo() (*SimpleSelector, SelectorListFlagType
 	return sel, flags, nil
 }
 
-func (sp *SelectorParser) consumeNestingParent() (*SimpleSelector, SelectorListFlagType, error) {
+func (sp *SelectorParser) consumeNestingParent() (*css.SimpleSelector, css.SelectorListFlagType, error) {
 	sp.tokenStream.Consume() // Consume the '&' delimiter token
 
-	var flags SelectorListFlagType
-	flags.Set(SelectorFlagContainsScopeOrParent)
-	flags.Set(SelectorFlagContainsPseudo)          // Nesting parent can contain pseudo selectors
-	flags.Set(SelectorFlagContainsComplexSelector) // Nesting parent can contain complex selectors
+	var flags css.SelectorListFlagType
+	flags.Set(css.SelectorFlagContainsScopeOrParent)
+	flags.Set(css.SelectorFlagContainsPseudo)          // Nesting parent can contain pseudo selectors
+	flags.Set(css.SelectorFlagContainsComplexSelector) // Nesting parent can contain complex selectors
 
-	sel := &SimpleSelector{
-		Match: SelectorMatchPseudoClass,
-		Data:  NewSelectorDataPseudo("parent", SelectorPseudoParent), // & is represented as the parent pseudo-class
+	sel := &css.SimpleSelector{
+		Match: css.SelectorMatchPseudoClass,
+		Data:  css.NewSelectorDataPseudo("parent", css.SelectorPseudoParent), // & is represented as the parent pseudo-class
 	}
 
 	return sel, flags, nil
@@ -813,7 +814,7 @@ func (sp *SelectorParser) parseOptionalB(a int) (int, int, error) {
 }
 
 // consumeNthChildOfSelectors parses the "of <selector-list>" part
-func (sp *SelectorParser) consumeNthChildOfSelectors() ([]*Selector, error) {
+func (sp *SelectorParser) consumeNthChildOfSelectors() ([]*css.Selector, error) {
 	token := sp.tokenStream.Peek()
 	if token.Type != csslexer.IdentToken || strings.ToLower(token.Value) != "of" {
 		return nil, errors.New("expected 'of' keyword")

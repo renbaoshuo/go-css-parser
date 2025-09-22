@@ -1,4 +1,4 @@
-package selector
+package css
 
 import (
 	"strconv"

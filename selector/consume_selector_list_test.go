@@ -5,6 +5,7 @@ import (
 
 	"go.baoshuo.dev/csslexer"
 
+	"go.baoshuo.dev/cssparser/css"
 	"go.baoshuo.dev/cssparser/nesting"
 	"go.baoshuo.dev/cssparser/token_stream"
 )
@@ -16,7 +17,7 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 		nestingType       nesting.NestingTypeType
 		expectedCount     int
 		expectedError     bool
-		expectedSelectors []*Selector
+		expectedSelectors []*css.Selector
 	}{
 		{
 			name:          "single selector",
@@ -24,14 +25,14 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 			nestingType:   nesting.NestingTypeNone,
 			expectedCount: 1,
 			expectedError: false,
-			expectedSelectors: []*Selector{
+			expectedSelectors: []*css.Selector{
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "div"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "div"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
@@ -43,34 +44,34 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 			nestingType:   nesting.NestingTypeNone,
 			expectedCount: 3,
 			expectedError: false,
-			expectedSelectors: []*Selector{
+			expectedSelectors: []*css.Selector{
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "div"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "div"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchClass,
-							Data:     NewSelectorData("class"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchClass,
+							Data:     css.NewSelectorData("class"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchId,
-							Data:     NewSelectorData("id"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchId,
+							Data:     css.NewSelectorData("id"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
@@ -82,49 +83,49 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 			nestingType:   nesting.NestingTypeNone,
 			expectedCount: 3,
 			expectedError: false,
-			expectedSelectors: []*Selector{
+			expectedSelectors: []*css.Selector{
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "div"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "div"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 						{
-							Match:    SelectorMatchClass,
-							Data:     NewSelectorData("class"),
-							Relation: SelectorRelationSubSelector,
-						},
-					},
-				},
-				{
-					Flag: SelectorFlagContainsComplexSelector,
-					Selectors: []*SimpleSelector{
-						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "p"),
-							Relation: SelectorRelationSubSelector,
-						},
-						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "span"),
-							Relation: SelectorRelationChild,
+							Match:    css.SelectorMatchClass,
+							Data:     css.NewSelectorData("class"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
 				{
-					Flag: SelectorFlagContainsComplexSelector,
-					Selectors: []*SimpleSelector{
+					Flag: css.SelectorFlagContainsComplexSelector,
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchClass,
-							Data:     NewSelectorData("item"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "p"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 						{
-							Match:    SelectorMatchClass,
-							Data:     NewSelectorData("next"),
-							Relation: SelectorRelationDirectAdjacent,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "span"),
+							Relation: css.SelectorRelationChild,
+						},
+					},
+				},
+				{
+					Flag: css.SelectorFlagContainsComplexSelector,
+					Selectors: []*css.SimpleSelector{
+						{
+							Match:    css.SelectorMatchClass,
+							Data:     css.NewSelectorData("item"),
+							Relation: css.SelectorRelationSubSelector,
+						},
+						{
+							Match:    css.SelectorMatchClass,
+							Data:     css.NewSelectorData("next"),
+							Relation: css.SelectorRelationDirectAdjacent,
 						},
 					},
 				},
@@ -136,24 +137,24 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 			nestingType:   nesting.NestingTypeNone,
 			expectedCount: 2,
 			expectedError: false,
-			expectedSelectors: []*Selector{
+			expectedSelectors: []*css.Selector{
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "div"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "div"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchClass,
-							Data:     NewSelectorData("class"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchClass,
+							Data:     css.NewSelectorData("class"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
@@ -165,24 +166,24 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 			nestingType:   nesting.NestingTypeNone,
 			expectedCount: 2,
 			expectedError: false,
-			expectedSelectors: []*Selector{
+			expectedSelectors: []*css.Selector{
 				{
-					Flag: SelectorFlagContainsComplexSelector,
-					Selectors: []*SimpleSelector{
+					Flag: css.SelectorFlagContainsComplexSelector,
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "div"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "div"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchClass,
-							Data:     NewSelectorData("class"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchClass,
+							Data:     css.NewSelectorData("class"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
@@ -201,14 +202,14 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 			nestingType:   nesting.NestingTypeNone,
 			expectedCount: 1,
 			expectedError: false,
-			expectedSelectors: []*Selector{
+			expectedSelectors: []*css.Selector{
 				{
-					Flag: SelectorFlagContainsComplexSelector,
-					Selectors: []*SimpleSelector{
+					Flag: css.SelectorFlagContainsComplexSelector,
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "div"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "div"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
@@ -220,24 +221,24 @@ func Test_SelectorParser_ConsumeComplexSelectorList(t *testing.T) {
 			nestingType:   nesting.NestingTypeNone,
 			expectedCount: 2,
 			expectedError: false,
-			expectedSelectors: []*Selector{
+			expectedSelectors: []*css.Selector{
 				{
 					Flag: 0,
-					Selectors: []*SimpleSelector{
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchTag,
-							Data:     NewSelectorDataTag("", "div"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchTag,
+							Data:     css.NewSelectorDataTag("", "div"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
 				{
-					Flag: SelectorFlagContainsComplexSelector,
-					Selectors: []*SimpleSelector{
+					Flag: css.SelectorFlagContainsComplexSelector,
+					Selectors: []*css.SimpleSelector{
 						{
-							Match:    SelectorMatchClass,
-							Data:     NewSelectorData("class"),
-							Relation: SelectorRelationSubSelector,
+							Match:    css.SelectorMatchClass,
+							Data:     css.NewSelectorData("class"),
+							Relation: css.SelectorRelationSubSelector,
 						},
 					},
 				},
