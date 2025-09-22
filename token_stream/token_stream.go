@@ -22,10 +22,16 @@ func NewTokenStream(input *csslexer.Input) *TokenStream {
 
 func (s *TokenStream) Peek() csslexer.Token {
 	if s.p == nil {
-		token := s.l.Next()
-		p := tokenPool.Get().(*csslexer.Token)
-		p.Type, p.Value, p.Raw = token.Type, token.Value, token.Raw
-		s.p = p
+		// Skip comment tokens automatically
+		for {
+			token := s.l.Next()
+			if token.Type != csslexer.CommentToken {
+				p := tokenPool.Get().(*csslexer.Token)
+				p.Type, p.Value, p.Raw = token.Type, token.Value, token.Raw
+				s.p = p
+				break
+			}
+		}
 	}
 
 	return csslexer.Token{
@@ -47,7 +53,13 @@ func (s *TokenStream) Consume() csslexer.Token {
 			Raw:   raw,
 		}
 	} else {
-		return s.l.Next()
+		// Skip comment tokens automatically
+		for {
+			token := s.l.Next()
+			if token.Type != csslexer.CommentToken {
+				return token
+			}
+		}
 	}
 }
 
