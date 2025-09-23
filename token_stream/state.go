@@ -6,6 +6,8 @@ import (
 	"go.baoshuo.dev/csslexer"
 )
 
+// TokenStreamState captures the state of a TokenStream at a specific point in time.
+// It can be used to restore the TokenStream to this state later.
 type TokenStreamState struct {
 	tokenStream *TokenStream // Reference to the TokenStream for context.
 
@@ -14,6 +16,7 @@ type TokenStreamState struct {
 	boundaries  map[csslexer.TokenType]bool // Boundary tokens.
 }
 
+// State captures the current state of the TokenStream and returns it as a TokenStreamState.
 func (ts *TokenStream) State() TokenStreamState {
 	state := TokenStreamState{
 		// Reference to the TokenStream for context.
@@ -36,6 +39,7 @@ func (ts *TokenStream) State() TokenStreamState {
 	return state
 }
 
+// Restore restores the TokenStream to the state captured in the TokenStreamState.
 func (tss TokenStreamState) Restore() {
 	// Restore the input state.
 	tss.inputState.Restore()

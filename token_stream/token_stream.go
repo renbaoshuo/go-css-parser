@@ -11,6 +11,7 @@ type TokenStream struct {
 	b map[csslexer.TokenType]bool // Boundary tokens, used to determine if the current token is a boundary token.
 }
 
+// NewTokenStream creates a new TokenStream from the given input.
 func NewTokenStream(input *csslexer.Input) *TokenStream {
 	return &TokenStream{
 		z: input,
@@ -20,6 +21,7 @@ func NewTokenStream(input *csslexer.Input) *TokenStream {
 	}
 }
 
+// Peek returns the current token without consuming it.
 func (s *TokenStream) Peek() csslexer.Token {
 	if s.p == nil {
 		// Skip comment tokens automatically
@@ -41,6 +43,7 @@ func (s *TokenStream) Peek() csslexer.Token {
 	}
 }
 
+// Consume consumes the current token and returns it.
 func (s *TokenStream) Consume() csslexer.Token {
 	if s.p != nil {
 		tt, value, raw := s.p.Type, s.p.Value, s.p.Raw
@@ -63,6 +66,7 @@ func (s *TokenStream) Consume() csslexer.Token {
 	}
 }
 
+// AtEnd returns true if the current token is an EOF token or a boundary token.
 func (ts *TokenStream) AtEnd() bool {
 	token := ts.Peek()
 	if token.Type == csslexer.EOFToken {
