@@ -220,7 +220,7 @@ func TestParser_ConsumeDeclaration(t *testing.T) {
 			expectError: false,
 			expected: &css.Declaration{
 				Property:  "background",
-				Value:     "urlimage.jpg) no-repeat center",
+				Value:     `url("image.jpg") no-repeat center`,
 				Important: false,
 			},
 		},
@@ -230,7 +230,7 @@ func TestParser_ConsumeDeclaration(t *testing.T) {
 			expectError: false,
 			expected: &css.Declaration{
 				Property:  "--main-color",
-				Value:     "ff0000",
+				Value:     "#ff0000",
 				Important: false,
 			},
 		},

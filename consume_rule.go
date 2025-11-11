@@ -306,7 +306,7 @@ func (p *Parser) consumeDeclaration() (*css.Declaration, error) {
 				valueTokens = append(valueTokens, "!")
 			}
 		} else {
-			valueTokens = append(valueTokens, token.Value)
+			valueTokens = append(valueTokens, token.String())
 			p.s.Consume()
 		}
 	}
